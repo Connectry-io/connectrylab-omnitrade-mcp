@@ -38,25 +38,29 @@ const c = {
 
 function printLogo(): void {
   console.log(`
-${c.cyan}╭─────────────────────────────────────────────────────────────────╮${c.reset}
-${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}     ${c.white}${c.bold}╔═╗╔╦╗╔╗╔${c.purple}╦${c.white}╔╦╗╦═╗╔═╗╔╦╗╔═╗${c.reset}                              ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}     ${c.white}${c.bold}║ ║║║║║║║${c.purple}║${c.white} ║ ╠╦╝╠═╣ ║║║╣ ${c.reset}                              ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}     ${c.white}${c.bold}╚═╝╩ ╩╝╚╝${c.purple}╩${c.white} ╩ ╩╚═╩ ╩═╩╝╚═╝${c.reset}  ${c.gray}MCP${c.reset}                        ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}     ${c.white}One AI.${c.reset}  ${c.cyan}107 Exchanges.${c.reset}  ${c.purple}Natural Language Trading.${c.reset}     ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}     ${c.gray}v${VERSION}${c.reset}                                      ${c.gray}Connectry Labs${c.reset}  ${c.cyan}│${c.reset}
-${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
-${c.cyan}╰─────────────────────────────────────────────────────────────────╯${c.reset}
+${c.cyan}+---------------------------------------------------------------+
+|                                                               |
+|  ${c.white}${c.bold}  ___  __  __ _   _ ${c.purple}_${c.white} _____ ____      _    ____  _____  ${c.reset}    ${c.cyan}|
+|  ${c.white}${c.bold} / _ \\|  \\/  | \\ | |${c.purple}| |${c.white}_   _|  _ \\    / \\  |  _ \\| ____| ${c.reset}    ${c.cyan}|
+|  ${c.white}${c.bold}| | | | |\\/| |  \\| |${c.purple}| |${c.white} | | | |_) |  / _ \\ | | | |  _|   ${c.reset}    ${c.cyan}|
+|  ${c.white}${c.bold}| |_| | |  | | |\\  |${c.purple}| |${c.white} | | |  _ <  / ___ \\| |_| | |___  ${c.reset}    ${c.cyan}|
+|  ${c.white}${c.bold} \\___/|_|  |_|_| \\_|${c.purple}|_|${c.white} |_| |_| \\_\\/_/   \\_\\____/|_____| ${c.reset}    ${c.cyan}|
+|                                                               |
+|  ${c.gray}-----------------------------------------------------${c.reset}        ${c.cyan}|
+|                                                               |
+|  ${c.white}One AI.${c.reset}  ${c.cyan}107 Exchanges.${c.reset}  ${c.purple}Natural Language Trading.${c.reset}       ${c.cyan}|
+|                                                               |
+|  ${c.gray}v${VERSION}${c.reset}                                    ${c.gray}Connectry Labs${c.reset}    ${c.cyan}|
+|                                                               |
++---------------------------------------------------------------+${c.reset}
 `);
 }
 
 function printCompactLogo(): void {
   console.log(`
-${c.cyan}╭───────────────────────────────────────────────────────────────╮
-│  ${c.white}${c.bold}OMNI${c.purple}TRADE${c.reset} ${c.gray}MCP${c.reset}  ${c.dim}•${c.reset}  ${c.white}One AI.${c.reset} ${c.cyan}107 Exchanges.${c.reset}                   ${c.cyan}│
-╰───────────────────────────────────────────────────────────────╯${c.reset}
+${c.cyan}+---------------------------------------------------------------+
+|  ${c.white}${c.bold}OMNI${c.purple}TRADE${c.reset} ${c.gray}MCP${c.reset}  -  ${c.white}One AI.${c.reset} ${c.cyan}107 Exchanges.${c.reset}                     ${c.cyan}|
++---------------------------------------------------------------+${c.reset}
 `);
 }
 
