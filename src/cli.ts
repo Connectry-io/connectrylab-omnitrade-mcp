@@ -38,30 +38,25 @@ const c = {
 
 function printLogo(): void {
   console.log(`
-${c.cyan}
-    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-    █${c.reset}                                                           ${c.cyan}█
-    █${c.reset}   ${c.white}${c.bold} ██████  ███    ███ ███    ██ ██${c.purple}████████${c.white}██████   █████  ██████  ███████ ${c.reset}${c.cyan} █
-    █${c.reset}   ${c.white}${c.bold}██    ██ ████  ████ ████   ██ ██${c.purple}   ██   ${c.white}██   ██ ██   ██ ██   ██ ██      ${c.reset}${c.cyan} █
-    █${c.reset}   ${c.white}${c.bold}██    ██ ██ ████ ██ ██ ██  ██ ██${c.purple}   ██   ${c.white}██████  ███████ ██   ██ █████   ${c.reset}${c.cyan} █
-    █${c.reset}   ${c.white}${c.bold}██    ██ ██  ██  ██ ██  ██ ██ ██${c.purple}   ██   ${c.white}██   ██ ██   ██ ██   ██ ██      ${c.reset}${c.cyan} █
-    █${c.reset}   ${c.white}${c.bold} ██████  ██      ██ ██   ████ ██${c.purple}   ██   ${c.white}██   ██ ██   ██ ██████  ███████ ${c.reset}${c.cyan} █
-    █${c.reset}                                                           ${c.cyan}█
-    █${c.gray}  ─────────────────────────────────────────────────────────${c.cyan}█
-    █${c.reset}                                                           ${c.cyan}█
-    █${c.reset}   ${c.white}One AI.  ${c.cyan}107 Exchanges.  ${c.purple}Natural Language Trading.${c.reset}     ${c.cyan}█
-    █${c.reset}                                                           ${c.cyan}█
-    █${c.reset}   ${c.gray}v${VERSION}${c.reset}                                  ${c.gray}by Connectry Labs${c.reset}   ${c.cyan}█
-    █${c.reset}                                                           ${c.cyan}█
-    ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-${c.reset}`);
+${c.cyan}╭─────────────────────────────────────────────────────────────────╮${c.reset}
+${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}     ${c.white}${c.bold}╔═╗╔╦╗╔╗╔${c.purple}╦${c.white}╔╦╗╦═╗╔═╗╔╦╗╔═╗${c.reset}                              ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}     ${c.white}${c.bold}║ ║║║║║║║${c.purple}║${c.white} ║ ╠╦╝╠═╣ ║║║╣ ${c.reset}                              ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}     ${c.white}${c.bold}╚═╝╩ ╩╝╚╝${c.purple}╩${c.white} ╩ ╩╚═╩ ╩═╩╝╚═╝${c.reset}  ${c.gray}MCP${c.reset}                        ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}     ${c.white}One AI.${c.reset}  ${c.cyan}107 Exchanges.${c.reset}  ${c.purple}Natural Language Trading.${c.reset}     ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}     ${c.gray}v${VERSION}${c.reset}                                      ${c.gray}Connectry Labs${c.reset}  ${c.cyan}│${c.reset}
+${c.cyan}│${c.reset}                                                                 ${c.cyan}│${c.reset}
+${c.cyan}╰─────────────────────────────────────────────────────────────────╯${c.reset}
+`);
 }
 
 function printCompactLogo(): void {
   console.log(`
-${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}
-  ${c.white}${c.bold}OMNITRADE${c.purple} MCP${c.reset}  ${c.gray}•  One AI. 107 Exchanges.${c.reset}
-${c.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}
+${c.cyan}╭───────────────────────────────────────────────────────────────╮
+│  ${c.white}${c.bold}OMNI${c.purple}TRADE${c.reset} ${c.gray}MCP${c.reset}  ${c.dim}•${c.reset}  ${c.white}One AI.${c.reset} ${c.cyan}107 Exchanges.${c.reset}                   ${c.cyan}│
+╰───────────────────────────────────────────────────────────────╯${c.reset}
 `);
 }
 
