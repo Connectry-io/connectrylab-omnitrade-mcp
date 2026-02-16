@@ -245,35 +245,118 @@ async function runSetupWizard(): Promise<void> {
     chmodSync(CONFIG_PATH, 0o600);
   } catch {}
 
-  // Claude Setup
+  // Claude Setup - Auto-configure
   console.log(`
   ${c.green}${c.bold}✓ SAVED${c.reset}
 
   ${c.white}${c.bold}STEP 4/4 — CONNECT TO CLAUDE${c.reset}
   ${c.gray}─────────────────────────────────────────────────────────────${c.reset}
+`);
 
+  const rl2 = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  
+  const question2 = (q: string): Promise<string> => 
+    new Promise(resolve => rl2.question(q, resolve));
+
+  // Detect Claude Desktop config path
+  const platform = process.platform;
+  let claudeConfigPath: string;
+  
+  if (platform === 'darwin') {
+    claudeConfigPath = join(homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
+  } else if (platform === 'win32') {
+    claudeConfigPath = join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+  } else {
+    claudeConfigPath = join(homedir(), '.config', 'Claude', 'claude_desktop_config.json');
+  }
+
+  const configureAuto = await question2(`  ${c.yellow}?${c.reset} Auto-configure Claude Desktop? ${c.dim}(Y/n)${c.reset}: `);
+  
+  if (configureAuto.toLowerCase() !== 'n') {
+    try {
+      // Read existing config or create new
+      let claudeConfig: Record<string, unknown> = {};
+      const claudeConfigDir = join(claudeConfigPath, '..');
+      
+      if (existsSync(claudeConfigPath)) {
+        claudeConfig = JSON.parse(readFileSync(claudeConfigPath, 'utf-8'));
+        console.log(`  ${c.dim}Found existing config${c.reset}`);
+      } else {
+        if (!existsSync(claudeConfigDir)) {
+          mkdirSync(claudeConfigDir, { recursive: true });
+        }
+        console.log(`  ${c.dim}Creating new config${c.reset}`);
+      }
+
+      // Merge MCP server config
+      if (!claudeConfig.mcpServers) {
+        claudeConfig.mcpServers = {};
+      }
+      (claudeConfig.mcpServers as Record<string, unknown>).omnitrade = {
+        command: 'omnitrade',
+        args: ['start'],
+      };
+
+      // Write config
+      writeFileSync(claudeConfigPath, JSON.stringify(claudeConfig, null, 2));
+      
+      console.log(`
+  ${c.green}${c.bold}✓ Claude Desktop configured!${c.reset}
+  ${c.dim}${claudeConfigPath}${c.reset}
+`);
+
+      // Offer to restart Claude Desktop (macOS only for now)
+      if (platform === 'darwin') {
+        const restart = await question2(`  ${c.yellow}?${c.reset} Restart Claude Desktop now? ${c.dim}(Y/n)${c.reset}: `);
+        
+        if (restart.toLowerCase() !== 'n') {
+          const { execSync } = await import('child_process');
+          try {
+            execSync('osascript -e \'quit app "Claude"\'', { stdio: 'ignore' });
+            await new Promise(r => setTimeout(r, 1000));
+            execSync('open -a "Claude"', { stdio: 'ignore' });
+            console.log(`  ${c.green}✓ Claude Desktop restarted${c.reset}`);
+          } catch {
+            console.log(`  ${c.yellow}! Please restart Claude Desktop manually${c.reset}`);
+          }
+        }
+      } else {
+        console.log(`  ${c.yellow}!${c.reset} Please restart Claude Desktop to apply changes`);
+      }
+
+    } catch (error) {
+      console.log(`  ${c.red}✗ Auto-config failed:${c.reset} ${(error as Error).message}`);
+      console.log(`
+  ${c.dim}Manual setup:${c.reset}
+  1. Open: ${c.blue}${claudeConfigPath}${c.reset}
+  2. Add omnitrade to mcpServers
+  3. Restart Claude Desktop
+`);
+    }
+  } else {
+    // Manual instructions
+    console.log(`
   ${c.cyan}1.${c.reset} Open Claude Desktop config:
+     ${c.blue}${claudeConfigPath}${c.reset}
 
-     ${c.dim}macOS:${c.reset} ${c.blue}~/Library/Application Support/Claude/claude_desktop_config.json${c.reset}
-     ${c.dim}Windows:${c.reset} ${c.blue}%APPDATA%\\Claude\\claude_desktop_config.json${c.reset}
+  ${c.cyan}2.${c.reset} Add this to mcpServers:
+     ${c.gray}"omnitrade": { "command": "omnitrade", "args": ["start"] }${c.reset}
 
-  ${c.cyan}2.${c.reset} Add this:
+  ${c.cyan}3.${c.reset} Restart Claude Desktop
+`);
+  }
 
-     ${c.gray}{
-       "mcpServers": {
-         "omnitrade": {
-           "command": "omnitrade",
-           "args": ["start"]
-         }
-       }
-     }${c.reset}
+  rl2.close();
 
-  ${c.cyan}3.${c.reset} ${c.white}Restart Claude Desktop${c.reset}
-
-  ${c.cyan}4.${c.reset} Try asking Claude:
-     ${c.dim}"What's my balance on ${exchange}?"${c.reset}
-
+  console.log(`
   ${c.gray}─────────────────────────────────────────────────────────────${c.reset}
+
+  ${c.white}${c.bold}TRY IT${c.reset}
+
+    Ask Claude: ${c.dim}"What's my balance on ${exchange}?"${c.reset}
 
   ${c.white}${c.bold}USEFUL COMMANDS${c.reset}
 
