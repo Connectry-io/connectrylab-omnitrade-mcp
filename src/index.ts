@@ -18,8 +18,14 @@ import { registerBalanceTools } from './tools/balances.js';
 import { registerPriceTools } from './tools/prices.js';
 import { registerOrderTools } from './tools/orders.js';
 import { registerArbitrageTools } from './tools/arbitrage.js';
+import { registerAlertTools } from './tools/alerts.js';
+import { registerChartTools } from './tools/charts.js';
+import { registerPortfolioHistoryTools } from './tools/portfolio-history.js';
+import { registerRebalanceTools } from './tools/rebalance.js';
+import { registerDCATools } from './tools/dca.js';
+import { registerConditionalOrderTools } from './tools/conditional-orders.js';
 
-const VERSION = '0.7.5';
+const VERSION = '0.8.0';
 
 /**
  * Display startup banner
@@ -82,9 +88,22 @@ async function main(): Promise<void> {
   registerBalanceTools(server, exchangeManager);
   registerPriceTools(server, exchangeManager);
   registerOrderTools(server, exchangeManager, config);
-  registerArbitrageTools(server, exchangeManager);
+  registerArbitrageTools(server, exchangeManager, config);
+  registerAlertTools(server, exchangeManager);
+  registerChartTools(server, exchangeManager);
+  registerPortfolioHistoryTools(server, exchangeManager);
+  registerRebalanceTools(server, exchangeManager, config);
+  registerDCATools(server, exchangeManager, config);
+  registerConditionalOrderTools(server, exchangeManager, config);
 
-  console.error('✓ Tools registered: get_balances, get_portfolio, get_prices, compare_prices, place_order, get_orders, cancel_order, get_arbitrage, check_spread');
+  console.error('✓ Core tools: get_balances, get_portfolio, get_prices, compare_prices, place_order, get_orders, cancel_order');
+  console.error('✓ Advanced tools: get_arbitrage, execute_arbitrage, check_spread');
+  console.error('✓ Alerts: set_price_alert, list_alerts, check_alerts, remove_alert, clear_triggered_alerts');
+  console.error('✓ Charts: get_chart');
+  console.error('✓ Portfolio: record_portfolio_snapshot, get_portfolio_history, clear_portfolio_history');
+  console.error('✓ Rebalance: rebalance_portfolio');
+  console.error('✓ DCA: setup_dca, list_dca_configs, execute_dca_orders, toggle_dca, remove_dca');
+  console.error('✓ Conditional: set_conditional_order, list_conditional_orders, check_conditional_orders, remove_conditional_order');
 
   // Security reminders
   if (config.security?.testnetOnly) {
