@@ -153,38 +153,41 @@ export function registerBalanceTools(
         }
       }
 
-      // Step 2: Fetch USD prices for each asset
+      // Step 2: Fetch USD prices (only for major coins to avoid timeout)
       const priceCache: Record<string, number> = {};
-      const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USD', 'TUSD', 'USDP'];
+      const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USD', 'TUSD', 'USDP', 'FDUSD'];
+      const majorCoins = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE', 'DOT', 'MATIC', 'LINK', 
+                         'AVAX', 'ATOM', 'UNI', 'LTC', 'NEAR', 'APT', 'ARB', 'OP', 'FIL', 'INJ'];
       
       // Get first available exchange for price queries
       const priceExchange = exchangeManager.getAll().values().next().value;
       
+      // Only fetch prices if we have <= 50 assets, otherwise only major coins
+      const assetList = Object.keys(assetTotals);
+      const assetsToPrice = assetList.length > 50 
+        ? assetList.filter(s => majorCoins.includes(s.toUpperCase()) || stablecoins.includes(s.toUpperCase()))
+        : assetList;
+      
       if (priceExchange) {
-        for (const symbol of Object.keys(assetTotals)) {
+        for (const symbol of assetsToPrice) {
           // Stablecoins are worth $1
           if (stablecoins.includes(symbol.toUpperCase())) {
             priceCache[symbol] = 1;
             continue;
           }
 
-          // Try to fetch price against USDT
+          // Try to fetch price against USDT (with timeout)
           try {
-            const ticker = await priceExchange.fetchTicker(`${symbol}/USDT`);
+            const ticker = await Promise.race([
+              priceExchange.fetchTicker(`${symbol}/USDT`),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+            ]) as { last?: number };
             if (ticker.last) {
               priceCache[symbol] = ticker.last;
             }
           } catch {
-            // Try USD pair as fallback
-            try {
-              const ticker = await priceExchange.fetchTicker(`${symbol}/USD`);
-              if (ticker.last) {
-                priceCache[symbol] = ticker.last;
-              }
-            } catch {
-              // No price available - will show as $0
-              priceCache[symbol] = 0;
-            }
+            // Skip - no price available
+            priceCache[symbol] = 0;
           }
         }
       }

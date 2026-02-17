@@ -9,7 +9,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import * as readline from 'readline';
 
-const VERSION = '0.7.2';
+const VERSION = '0.7.4';
 const CONFIG_PATH = join(homedir(), '.omnitrade', 'config.json');
 
 // ============================================
