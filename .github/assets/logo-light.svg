@@ -6,7 +6,7 @@
     </linearGradient>
   </defs>
   
-  <!-- O--O Symbol -->
+  <!-- OO Symbol -->
   <circle cx="30" cy="40" r="16" fill="none" stroke="url(#gradient-light)" stroke-width="4"/>
   <rect x="46" y="37" width="28" height="6" rx="3" fill="url(#gradient-light)"/>
   <circle cx="90" cy="40" r="16" fill="none" stroke="url(#gradient-light)" stroke-width="4"/>
