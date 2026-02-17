@@ -230,6 +230,78 @@ Once the daemon, real Telegram alerts, and paper trading exist:
 
 ---
 
+## Phase 4 — Ecosystem & Distribution
+
+### 8. TradingView Webhook Integration
+
+**Why:** TradingView has millions of active traders who already set up alerts and strategies. OmniTrade becomes their execution layer — no new learning required.
+
+**What it does:**
+- Expose a webhook endpoint OmniTrade listens on
+- TradingView alert fires → OmniTrade executes the trade
+- Supports any TradingView strategy/indicator trigger
+- Massive existing audience that already knows what they want
+
+**Prerequisites:**
+- HTTP webhook server (simple Express endpoint)
+- Webhook auth/secret validation
+- Trade execution mapped from TradingView payload format
+- Optionally: ngrok/tunnel for local setups, or hosted version
+
+**Effort:** 2–3 days
+
+---
+
+### 9. Crypto Tax Export
+
+**Why:** Crypto tax reporting is genuinely painful. People will use OmniTrade just for this feature, completely separate from the AI/trading angle. Real utility, real retention.
+
+**What it does:**
+- Pull full trade history from all connected exchanges via CCXT
+- Export as Koinly/CoinTracker/CryptoTaxCalculator-compatible CSV
+- `omnitrade tax --year 2025 --format koinly`
+
+**Prerequisites:**
+- CCXT trade history fetching (already have CCXT)
+- CSV formatter matching Koinly/CoinTracker column specs
+- Date range filtering
+
+**Effort:** 2–3 days
+
+---
+
+### 10. Strategy Backtesting
+
+**Why:** Makes DCA and strategy features feel credible instead of theoretical. "How would buying $50 of BTC every Monday for the last year have performed?" — answers that make people trust and use OmniTrade.
+
+**What it does:**
+- Fetch historical OHLCV data via CCXT
+- Simulate DCA/conditional strategies over historical data
+- Show P&L, drawdown, win rate
+- Compare strategies side-by-side
+
+**Prerequisites:**
+- CCXT historical OHLCV data fetching (already have CCXT)
+- Backtesting engine (simulation loop over historical prices)
+- Report formatting (ASCII table or SVG chart)
+
+**Effort:** 3–5 days
+
+---
+
+### 11. Anthropic MCP Marketplace
+
+**Why:** Anthropic is building an official MCP ecosystem. Getting OmniTrade listed there = massive distribution from Anthropic's own platform, far more than GitHub lists.
+
+**What's needed:**
+- Monitor when Anthropic opens official MCP marketplace submissions
+- Ensure OmniTrade meets any quality/security requirements
+- Submit early (first-mover advantage)
+
+**Effort:** Track & submit when ready. No build work needed.
+
+---
+
 ## Build Order Recommendation
 
 ```
@@ -237,9 +309,39 @@ Week 1:  Daemon + watch command      ← feels alive immediately
 Week 2:  Telegram alerts             ← actually useful
 Week 3:  Paper trading               ← removes adoption blocker  
 Week 4:  TUI dashboard               ← the "wow" moment
-Week 5:  SVG charts                  ← polish
+Week 5:  SVG charts + tax export     ← polish + real utility
+Week 6:  TradingView webhooks        ← existing trader audience
+Week 7:  Backtesting                 ← makes strategies credible
 Month 2: Tauri desktop app           ← the real product launch
+Ongoing: Watch for Anthropic MCP marketplace
 ```
+
+---
+
+## Full Feature List (Summary)
+
+| # | Feature | Why it matters | Effort |
+|---|---------|---------------|--------|
+| 1 | Background daemon | Foundation for everything else | 1–2 days |
+| 2 | `omnitrade watch` live ticker | Feels alive, great for demos | 1–2 days |
+| 3 | Telegram alerts | Actually useful, real notifications | 2–3 days |
+| 4 | Paper trading | Removes adoption blocker, try without real money | 2–3 days |
+| 5 | TUI dashboard | The "wow" moment, Bloomberg Terminal lite | 3–4 days |
+| 6 | SVG charts in Claude | Makes chart responses genuinely impressive | 1–2 days |
+| 7 | Tauri desktop app | Real product, non-developer audience | 2–3 weeks |
+| 8 | TradingView webhooks | Existing trader audience, no learning curve | 2–3 days |
+| 9 | Crypto tax export | Solves real pain, retention driver | 2–3 days |
+| 10 | Strategy backtesting | Makes DCA credible, builds trust | 3–5 days |
+| 11 | Anthropic MCP marketplace | Massive distribution, zero build cost | Track & submit |
+
+## Monetization Summary
+
+| Strategy | Timeline | Revenue type |
+|----------|----------|-------------|
+| Exchange referral commissions | Now — zero extra work | Passive |
+| OmniTrade Pro (premium CLI features) | After Phase 1–2 | One-time / subscription |
+| OmniTrade Cloud (hosted, 24/7 alerts) | Month 2+ | Recurring SaaS |
+| White-label licensing | When product is mature | Deal-based |
 
 ---
 
