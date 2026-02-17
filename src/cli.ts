@@ -205,6 +205,91 @@ const EXCHANGE_INFO: Record<string, ExchangeInfo> = {
       'Copy API Key, Secret, and Passphrase',
     ],
   },
+  gate: {
+    name: 'Gate.io',
+    description: 'Wide selection of altcoins',
+    apiUrl: 'https://www.gate.io/myaccount/api_key_manage',
+    docsUrl: 'https://www.gate.io/help/api/general/17337',
+    supportsOAuth: false,
+    needsPassphrase: false,
+    steps: [
+      'Go to My Account → API Management',
+      'Click "Create API Key"',
+      'Permissions: ✓ Spot Trade  ✓ Read  ✗ Withdraw',
+      'Copy API Key and Secret',
+    ],
+  },
+  bitget: {
+    name: 'Bitget',
+    description: 'Copy trading platform',
+    apiUrl: 'https://www.bitget.com/account/api',
+    docsUrl: 'https://www.bitget.com/academy/api-trading-guide',
+    supportsOAuth: false,
+    needsPassphrase: true,
+    steps: [
+      'Go to Account → API Management',
+      'Click "Create API"',
+      'Set a passphrase',
+      'Permissions: ✓ Read  ✓ Trade  ✗ Transfer',
+      'Copy API Key, Secret, and Passphrase',
+    ],
+  },
+  htx: {
+    name: 'HTX (Huobi)',
+    description: 'Major Asian exchange',
+    apiUrl: 'https://www.htx.com/en-us/apikey/',
+    docsUrl: 'https://www.htx.com/support/en-us/detail/900000203206',
+    supportsOAuth: false,
+    needsPassphrase: false,
+    steps: [
+      'Go to API Management',
+      'Click "Create API Key"',
+      'Permissions: ✓ Read  ✓ Trade  ✗ Withdraw',
+      'Copy API Key and Secret',
+    ],
+  },
+  mexc: {
+    name: 'MEXC',
+    description: 'High liquidity, many pairs',
+    apiUrl: 'https://www.mexc.com/user/openapi',
+    docsUrl: 'https://www.mexc.com/support/articles/360030903032',
+    supportsOAuth: false,
+    needsPassphrase: false,
+    steps: [
+      'Go to API Management',
+      'Click "Create API"',
+      'Permissions: ✓ Read  ✓ Trade  ✗ Withdraw',
+      'Copy API Key and Secret',
+    ],
+  },
+  cryptocom: {
+    name: 'Crypto.com',
+    description: 'Popular mobile-first exchange',
+    apiUrl: 'https://crypto.com/exchange/user/settings/api-management',
+    docsUrl: 'https://help.crypto.com/en/articles/3511424',
+    supportsOAuth: false,
+    needsPassphrase: false,
+    steps: [
+      'Go to Settings → API Management',
+      'Click "Create New API Key"',
+      'Permissions: ✓ Read  ✓ Trade  ✗ Withdraw',
+      'Copy API Key and Secret',
+    ],
+  },
+  gemini: {
+    name: 'Gemini',
+    description: 'US regulated, institutional',
+    apiUrl: 'https://exchange.gemini.com/settings/api',
+    docsUrl: 'https://support.gemini.com/hc/en-us/articles/360031080191',
+    supportsOAuth: false,
+    needsPassphrase: false,
+    steps: [
+      'Go to Settings → API',
+      'Click "Create a New API Key"',
+      'Scope: ✓ Trading  ✗ Fund Management',
+      'Copy API Key and Secret',
+    ],
+  },
 };
 
 // ============================================
@@ -284,160 +369,224 @@ async function runSetupWizard(): Promise<void> {
   // Welcome
   console.log(`
   ${c.white}${c.bold}SETUP WIZARD${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-  Let's connect your exchange to Claude in ${c.green}2 minutes${c.reset}.
+  Let's connect your exchanges to Claude.
 
   ${c.white}${c.bold}HOW IT WORKS${c.reset}
 
-    ${c.cyan}1.${c.reset}  You create API keys on your exchange ${c.dim}(read/trade only)${c.reset}
-    ${c.cyan}2.${c.reset}  We store them locally on your machine
-    ${c.cyan}3.${c.reset}  Claude Desktop uses them via MCP protocol
-    ${c.cyan}4.${c.reset}  You chat naturally: ${c.dim}"What's my BTC balance?"${c.reset}
+    ${c.cyan}1.${c.reset}  Select which exchanges you use
+    ${c.cyan}2.${c.reset}  Create API keys on each ${c.dim}(read/trade only, never withdraw)${c.reset}
+    ${c.cyan}3.${c.reset}  Enter your keys — stored locally on your machine
+    ${c.cyan}4.${c.reset}  Chat naturally: ${c.dim}"What's my total portfolio worth?"${c.reset}
 
-  ${c.orange}⚠${c.reset}  Your keys ${c.bold}never leave your computer${c.reset}.
-     OmniTrade runs 100% locally.
+  ${c.orange}⚠${c.reset}  Your keys ${c.bold}never leave your computer${c.reset}. 100% local.
 
 `);
 
   await question(`  ${c.dim}Press Enter to continue...${c.reset}`);
   
-  // Choose Exchange
+  // Choose Exchanges (multi-select)
   console.log(`
-  ${c.white}${c.bold}STEP 1 — CHOOSE EXCHANGE${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.white}${c.bold}STEP 1 — SELECT EXCHANGES${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
+
+  ${c.dim}Enter numbers separated by commas (e.g., 1,3,5) or just one:${c.reset}
 `);
 
   const exchangeKeys = Object.keys(EXCHANGE_INFO);
   exchangeKeys.forEach((key, i) => {
     const info = EXCHANGE_INFO[key]!;
-    const num = `[${i + 1}]`;
-    const oauth = info.supportsOAuth ? `${c.green}OAuth${c.reset}` : '';
-    console.log(`    ${c.cyan}${num.padEnd(4)}${c.reset} ${info.name.padEnd(12)} ${c.dim}${info.description}${c.reset} ${oauth}`);
+    const num = `[${i + 1}]`.padEnd(5);
+    console.log(`    ${c.cyan}${num}${c.reset}${info.name.padEnd(14)} ${c.dim}${info.description}${c.reset}`);
   });
-  console.log(`    ${c.cyan}[${exchangeKeys.length + 1}]${c.reset}  Other        ${c.dim}Enter exchange name manually${c.reset}`);
+  
+  const otherNum = exchangeKeys.length + 1;
+  const listNum = exchangeKeys.length + 2;
+  console.log(`    ${c.cyan}[${otherNum}]${c.reset}  Other          ${c.dim}Enter name manually (any of 107 exchanges)${c.reset}`);
+  console.log(`    ${c.cyan}[${listNum}]${c.reset}  List all       ${c.dim}See all 107 supported exchanges${c.reset}`);
   console.log('');
 
-  const exchangeChoice = await question(`  ${c.yellow}?${c.reset} Select [1-${exchangeKeys.length + 1}]: `);
+  const exchangeChoice = await question(`  ${c.yellow}?${c.reset} Select: `);
   
-  const choiceNum = parseInt(exchangeChoice.trim(), 10);
-  let exchange: string;
-  let exchangeInfo: ExchangeInfo | undefined;
-  
-  if (choiceNum >= 1 && choiceNum <= exchangeKeys.length) {
-    exchange = exchangeKeys[choiceNum - 1]!;
-    exchangeInfo = EXCHANGE_INFO[exchange];
-  } else {
-    exchange = await question(`  ${c.yellow}?${c.reset} Exchange name: `);
-    exchange = exchange.toLowerCase().trim();
-  }
-  
-  // API Key Instructions with detailed guidance
-  console.log(`
-  ${c.white}${c.bold}STEP 2 — CREATE API KEYS${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
-`);
+  // Handle "list all" option
+  if (exchangeChoice.trim() === String(listNum)) {
+    console.log(`
+  ${c.white}${c.bold}ALL 107 SUPPORTED EXCHANGES${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-  if (exchangeInfo) {
-    console.log(`  ${c.white}${c.bold}${exchangeInfo.name}${c.reset} API Setup:\n`);
-    
-    // Show steps
-    exchangeInfo.steps.forEach((step, i) => {
-      console.log(`    ${c.cyan}${i + 1}.${c.reset} ${step}`);
-    });
-    
-    console.log('');
-    console.log(`  ${c.blue}API Page:${c.reset}  ${exchangeInfo.apiUrl}`);
-    if (exchangeInfo.testnetUrl) {
-      console.log(`  ${c.blue}Testnet:${c.reset}   ${exchangeInfo.testnetUrl}`);
+  OmniTrade uses ${c.cyan}CCXT${c.reset} (CryptoCurrency eXchange Trading Library),
+  which supports ${c.white}107 exchanges${c.reset} including:
+
+  ${c.cyan}Major:${c.reset}    binance, coinbase, kraken, bybit, okx, kucoin,
+            gate, bitget, htx, mexc, cryptocom, gemini
+
+  ${c.cyan}Popular:${c.reset}  bitstamp, bitfinex, poloniex, bittrex, upbit,
+            bithumb, lbank, phemex, woo, ascendex
+
+  ${c.cyan}Futures:${c.reset}  binanceusdm, binancecoinm, bybit, okx, deribit,
+            bitmex, bitget, phemex, woo
+
+  ${c.cyan}DEX:${c.reset}      uniswap, sushiswap ${c.dim}(limited support)${c.reset}
+
+  ${c.dim}Full list: Run ${c.cyan}omnitrade exchanges${c.reset}${c.dim} or visit:${c.reset}
+  ${c.blue}github.com/ccxt/ccxt/wiki/Exchange-Markets${c.reset}
+
+  ${c.white}${c.bold}TO SET UP ANY EXCHANGE:${c.reset}
+
+    1. Select ${c.cyan}[${otherNum}] Other${c.reset} and type the exchange name
+    2. Go to that exchange's API settings
+    3. Create API key with ${c.green}Read + Trade${c.reset} permissions
+    4. Enter your API key and secret
+
+`);
+    await question(`  ${c.dim}Press Enter to go back to selection...${c.reset}`);
+    rl.close();
+    return runSetupWizard(); // Restart wizard
+  }
+
+  // Parse selections
+  const selections = exchangeChoice.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+  const selectedExchanges: { id: string; info?: ExchangeInfo }[] = [];
+
+  for (const num of selections) {
+    if (num >= 1 && num <= exchangeKeys.length) {
+      const id = exchangeKeys[num - 1]!;
+      selectedExchanges.push({ id, info: EXCHANGE_INFO[id] });
+    } else if (num === otherNum) {
+      const name = await question(`  ${c.yellow}?${c.reset} Exchange name: `);
+      selectedExchanges.push({ id: name.toLowerCase().trim() });
     }
-    console.log(`  ${c.blue}Help:${c.reset}      ${exchangeInfo.docsUrl}`);
-  } else {
-    console.log(`  ${c.white}${c.bold}${exchange.toUpperCase()}${c.reset} API Setup:\n`);
-    console.log(`    ${c.cyan}1.${c.reset} Log into ${exchange} and find API settings`);
-    console.log(`    ${c.cyan}2.${c.reset} Create a new API key`);
-    console.log(`    ${c.cyan}3.${c.reset} Enable: ${c.green}✓ Read${c.reset}  ${c.green}✓ Trade${c.reset}  ${c.red}✗ Withdraw${c.reset}`);
-    console.log(`    ${c.cyan}4.${c.reset} Copy your API Key and Secret`);
+  }
+
+  if (selectedExchanges.length === 0) {
+    console.log(`  ${c.red}No valid exchanges selected. Please try again.${c.reset}`);
+    rl.close();
+    return;
   }
 
   console.log(`
-  ${c.orange}╔════════════════════════════════════════════════════╗${c.reset}
-  ${c.orange}║${c.reset}  ${c.orange}⚠  SECURITY:${c.reset} Never enable withdrawal permissions  ${c.orange}║${c.reset}
-  ${c.orange}║${c.reset}     OmniTrade only needs read + trade access        ${c.orange}║${c.reset}
-  ${c.orange}╚════════════════════════════════════════════════════╝${c.reset}
+  ${c.green}✓${c.reset} Selected: ${selectedExchanges.map(e => e.info?.name || e.id).join(', ')}
 `);
 
-  await question(`  ${c.dim}Press Enter when you have your keys...${c.reset}`);
-
-  // Enter Keys
-  console.log(`
-  ${c.white}${c.bold}STEP 3 — ENTER YOUR KEYS${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
-
-  ${c.dim}Paste your API credentials below.${c.reset}
-  ${c.dim}Stored at: ~/.omnitrade/config.json (local only)${c.reset}
-
-`);
-
-  const apiKey = await question(`  ${c.cyan}API Key:${c.reset}    `);
-  const secret = await question(`  ${c.cyan}Secret:${c.reset}     `);
-  
-  let password = '';
-  const needsPassphrase = exchangeInfo?.needsPassphrase || ['coinbase', 'kucoin', 'okx'].includes(exchange);
-  if (needsPassphrase) {
-    password = await question(`  ${c.cyan}Passphrase:${c.reset} `);
-  }
-  
-  // Testnet option
-  console.log('');
-  const hasTestnet = exchangeInfo?.testnetUrl || ['binance', 'bybit'].includes(exchange);
-  let testnet = false;
-  if (hasTestnet) {
-    console.log(`  ${c.dim}Testnet available — practice with fake money first${c.reset}`);
-    const testnetAnswer = await question(`  ${c.yellow}?${c.reset} Use testnet mode? ${c.dim}(Y/n)${c.reset}: `);
-    testnet = testnetAnswer.toLowerCase() !== 'n';
-  } else {
-    console.log(`  ${c.dim}Note: ${exchange} doesn't have a public testnet${c.reset}`);
-    console.log(`  ${c.dim}Your API will connect to the live exchange${c.reset}`);
-    await question(`  ${c.dim}Press Enter to continue...${c.reset}`);
-  }
-
-  rl.close();
-
-  // Save
+  // Collect keys for each exchange
   const config: Record<string, unknown> = {
-    exchanges: {
-      [exchange]: {
-        apiKey: apiKey.trim(),
-        secret: secret.trim(),
-        ...(password.trim() ? { password: password.trim() } : {}),
-        testnet,
-      },
-    },
+    exchanges: {},
     security: {
       maxOrderSize: 100,
       confirmTrades: true,
     },
   };
 
+  for (let i = 0; i < selectedExchanges.length; i++) {
+    const { id: exchange, info: exchangeInfo } = selectedExchanges[i]!;
+    const displayName = exchangeInfo?.name || exchange.toUpperCase();
+    const stepNum = i + 2;
+    const totalSteps = selectedExchanges.length + 2; // +1 for selection, +1 for Claude config
+    
+    // API Key Instructions
+    console.log(`
+  ${c.white}${c.bold}STEP ${stepNum}/${totalSteps} — ${displayName} API KEYS${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
+`);
+
+    if (exchangeInfo) {
+      console.log(`  ${c.dim}Create API keys at:${c.reset} ${c.blue}${exchangeInfo.apiUrl}${c.reset}\n`);
+      exchangeInfo.steps.forEach((step, j) => {
+        console.log(`    ${c.cyan}${j + 1}.${c.reset} ${step}`);
+      });
+      console.log('');
+      if (exchangeInfo.docsUrl) {
+        console.log(`  ${c.dim}Need help?${c.reset} ${c.blue}${exchangeInfo.docsUrl}${c.reset}`);
+      }
+    } else {
+      console.log(`  ${c.dim}Go to ${exchange}'s API settings and create a new API key.${c.reset}`);
+      console.log(`  ${c.dim}Enable: ${c.green}✓ Read${c.reset}${c.dim}  ${c.green}✓ Trade${c.reset}${c.dim}  ${c.red}✗ Withdraw${c.reset}`);
+    }
+
+    console.log(`
+  ${c.orange}╔══════════════════════════════════════════════════════╗${c.reset}
+  ${c.orange}║${c.reset}  ${c.orange}⚠  SECURITY:${c.reset} Never enable withdrawal permissions   ${c.orange}║${c.reset}
+  ${c.orange}╚══════════════════════════════════════════════════════╝${c.reset}
+`);
+
+    await question(`  ${c.dim}Press Enter when you have your keys...${c.reset}`);
+
+    // Enter Keys
+    console.log(`
+  ${c.dim}Paste your ${displayName} credentials:${c.reset}
+`);
+
+    const apiKey = await question(`  ${c.cyan}API Key:${c.reset}    `);
+    const secret = await question(`  ${c.cyan}Secret:${c.reset}     `);
+    
+    let password = '';
+    const needsPassphrase = exchangeInfo?.needsPassphrase || ['coinbase', 'kucoin', 'okx', 'bitget'].includes(exchange);
+    if (needsPassphrase) {
+      password = await question(`  ${c.cyan}Passphrase:${c.reset} `);
+    }
+    
+    // Testnet option
+    let testnet = false;
+    const hasTestnet = exchangeInfo?.testnetUrl || ['binance', 'bybit'].includes(exchange);
+    if (hasTestnet) {
+      const testnetAnswer = await question(`  ${c.yellow}?${c.reset} Use testnet? ${c.dim}(y/N)${c.reset}: `);
+      testnet = testnetAnswer.toLowerCase() === 'y';
+    }
+
+    // Add to config
+    (config.exchanges as Record<string, unknown>)[exchange] = {
+      apiKey: apiKey.trim(),
+      secret: secret.trim(),
+      ...(password.trim() ? { password: password.trim() } : {}),
+      testnet,
+    };
+
+    console.log(`  ${c.green}✓${c.reset} ${displayName} configured!`);
+  }
+
+  rl.close();
+  
+  // Load existing config and merge
+  let existingConfig: Record<string, unknown> = {};
+  if (existsSync(CONFIG_PATH)) {
+    try {
+      existingConfig = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8'));
+    } catch {}
+  }
+  
+  // Merge exchanges
+  const mergedConfig = {
+    ...existingConfig,
+    ...config,
+    exchanges: {
+      ...((existingConfig.exchanges as Record<string, unknown>) || {}),
+      ...((config.exchanges as Record<string, unknown>) || {}),
+    },
+  };
+
+  // Save config
   const configDir = join(homedir(), '.omnitrade');
   if (!existsSync(configDir)) {
     mkdirSync(configDir, { recursive: true });
   }
 
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+  writeFileSync(CONFIG_PATH, JSON.stringify(mergedConfig, null, 2));
 
   try {
     const { chmodSync } = await import('fs');
     chmodSync(CONFIG_PATH, 0o600);
   } catch {}
 
-  // Claude Setup - Auto-configure
-  console.log(`
-  ${c.green}${c.bold}✓ SAVED${c.reset}
+  const exchangeCount = Object.keys(mergedConfig.exchanges as Record<string, unknown>).length;
 
-  ${c.white}${c.bold}STEP 4 — CONNECT TO CLAUDE${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  // Claude Setup - Auto-configure
+  const finalStepNum = selectedExchanges.length + 2;
+  console.log(`
+  ${c.green}${c.bold}✓ ${exchangeCount} EXCHANGE${exchangeCount > 1 ? 'S' : ''} CONFIGURED${c.reset}
+
+  ${c.white}${c.bold}STEP ${finalStepNum}/${finalStepNum} — CONNECT TO CLAUDE${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 `);
 
   const rl2 = readline.createInterface({
@@ -538,20 +687,26 @@ async function runSetupWizard(): Promise<void> {
 
   rl2.close();
 
+  const configuredExchanges = Object.keys(mergedConfig.exchanges as Record<string, unknown>);
+  const firstExchange = configuredExchanges[0] || 'binance';
+  
   console.log(`
   ${c.gray}─────────────────────────────────────────────────────────────${c.reset}
 
   ${c.white}${c.bold}TRY IT${c.reset}
 
-    Ask Claude: ${c.dim}"What's my balance on ${exchange}?"${c.reset}
+    ${c.dim}"What's my portfolio worth?"${c.reset}
+    ${c.dim}"Show my ${firstExchange} balance"${c.reset}
+    ${c.dim}"Compare BTC prices across my exchanges"${c.reset}
 
   ${c.white}${c.bold}USEFUL COMMANDS${c.reset}
 
-    ${c.cyan}omnitrade test${c.reset}      Test your connection
+    ${c.cyan}omnitrade test${c.reset}      Test your connections
     ${c.cyan}omnitrade config${c.reset}    View configuration
-    ${c.cyan}omnitrade setup${c.reset}     Add another exchange
+    ${c.cyan}omnitrade setup${c.reset}     Add more exchanges
 
   ${c.green}${c.bold}✓ Setup complete!${c.reset}
+  ${c.dim}Configured: ${configuredExchanges.join(', ')}${c.reset}
 
 `);
 }
