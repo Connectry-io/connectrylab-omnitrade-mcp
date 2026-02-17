@@ -57,14 +57,17 @@ function printLogo(): void {
   const line = '-'.repeat(W);
   console.log(`
 ${c.cyan}+${line}+${c.reset}
-${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}----${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.white}${c.bold}OmniTrade${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.dim}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
 ${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.white}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges. Natural language. Local & secure.${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}--${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
 ${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.gray}by ${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}${c.bold}O M N I T R A D E${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.gray}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges  •  Natural language  •  Local & secure${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
 ${c.cyan}+${line}+${c.reset}
 `);
 }
@@ -73,21 +76,24 @@ function printBanner(): void {
   const line = '-'.repeat(W);
   console.log(`
 ${c.cyan}+${line}+${c.reset}
-${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}----${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.white}${c.bold}OmniTrade${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.dim}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
 ${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.white}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges. Natural language. Local & secure.${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}--${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
 ${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
-${c.cyan}|${c.reset}${center(`${c.gray}by ${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}${c.bold}O M N I T R A D E${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.gray}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges  •  Natural language  •  Local & secure${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
 ${c.cyan}+${line}+${c.reset}
 `);
 }
 
 function printCompactLogo(): void {
   console.log(`
-${c.cyan}o${c.gray}--${c.purple}o${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}v${VERSION}${c.reset} ${c.dim}by Connectry${c.reset}
+${c.cyan}o${c.gray}-${c.purple}o${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}v${VERSION}${c.reset} ${c.dim}• Connectry${c.reset}
 `);
 }
 
