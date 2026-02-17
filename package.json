@@ -1,6 +1,6 @@
 {
   "name": "omnitrade-mcp",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Multi-exchange AI trading via MCP. 107 exchanges. One AI.",
   "type": "module",
   "main": "dist/index.js",

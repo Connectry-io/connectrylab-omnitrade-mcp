@@ -36,21 +36,58 @@ const c = {
 // LOGO
 // ============================================
 
+// Box width: 58 characters inside (60 total with borders)
+const W = 58;
+
+function pad(text: string, width: number): string {
+  const visibleLength = text.replace(/\x1b\[[0-9;]*m/g, '').length;
+  const padding = width - visibleLength;
+  return text + ' '.repeat(Math.max(0, padding));
+}
+
+function center(text: string, width: number): string {
+  const visibleLength = text.replace(/\x1b\[[0-9;]*m/g, '').length;
+  const totalPadding = width - visibleLength;
+  const leftPad = Math.floor(totalPadding / 2);
+  const rightPad = totalPadding - leftPad;
+  return ' '.repeat(Math.max(0, leftPad)) + text + ' '.repeat(Math.max(0, rightPad));
+}
+
 function printLogo(): void {
+  const line = '-'.repeat(W);
   console.log(`
-${c.cyan}◆${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}${VERSION}${c.reset} ${c.dim}— Talk to your crypto with Claude${c.reset}
+${c.cyan}+${line}+${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}----${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}${c.bold}OmniTrade${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges. Natural language. Local & secure.${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.gray}by ${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}+${line}+${c.reset}
 `);
 }
 
 function printBanner(): void {
+  const line = '-'.repeat(W);
   console.log(`
-${c.cyan}◆${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}${VERSION}${c.reset} ${c.dim}— Talk to your crypto with Claude${c.reset}
+${c.cyan}+${line}+${c.reset}
+${c.cyan}|${c.reset}${center(`${c.cyan}o${c.gray}----${c.purple}o${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}${c.bold}OmniTrade${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}v${VERSION}${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.white}Talk to your crypto with Claude${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.dim}107 exchanges. Natural language. Local & secure.${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${' '.repeat(W)}${c.cyan}|${c.reset}
+${c.cyan}|${c.reset}${center(`${c.gray}by ${c.cyan}Connectry${c.reset}`, W)}${c.cyan}|${c.reset}
+${c.cyan}+${line}+${c.reset}
 `);
 }
 
 function printCompactLogo(): void {
   console.log(`
-${c.cyan}◆${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}${VERSION}${c.reset}
+${c.cyan}o${c.gray}--${c.purple}o${c.reset} ${c.white}${c.bold}OmniTrade${c.reset} ${c.gray}v${VERSION}${c.reset} ${c.dim}by Connectry${c.reset}
 `);
 }
 
@@ -173,33 +210,52 @@ function printHelp(): void {
   
   console.log(`
   ${c.white}${c.bold}QUICK START${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-    ${c.yellow}$${c.reset} ${c.green}${c.bold}omnitrade setup${c.reset}     ${c.dim}← Start here! 2-minute wizard${c.reset}
+    ${c.yellow}$${c.reset} ${c.green}${c.bold}omnitrade setup${c.reset}     ${c.dim}← 2-minute guided wizard${c.reset}
 
   ${c.white}${c.bold}COMMANDS${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
     ${c.green}setup${c.reset}        Interactive setup wizard
-    ${c.cyan}start${c.reset}        Launch MCP server for Claude
-    ${c.cyan}test${c.reset}         Verify exchange connections
-    ${c.cyan}config${c.reset}       View saved configuration
+    ${c.cyan}start${c.reset}        Launch MCP server for Claude Desktop
+    ${c.cyan}test${c.reset}         Verify your exchange connections work
+    ${c.cyan}config${c.reset}       View saved API configuration
     ${c.cyan}exchanges${c.reset}    Browse all 107 supported exchanges
     ${c.cyan}help${c.reset}         Show this help
 
-  ${c.white}${c.bold}EXAMPLE PROMPTS${c.reset} ${c.dim}(after setup)${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.white}${c.bold}WHAT YOU CAN DO${c.reset} ${c.dim}(once connected)${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-    ${c.dim}"What's my portfolio worth?"${c.reset}
-    ${c.dim}"Show me the BTC price on Binance"${c.reset}
-    ${c.dim}"Buy 0.01 ETH at market price"${c.reset}
-    ${c.dim}"Compare ETH prices across exchanges"${c.reset}
+    ${c.cyan}Portfolio${c.reset}    "What's my portfolio worth in USD?"
+                 "Show all my holdings across exchanges"
+                 "What % of my portfolio is in ETH?"
+
+    ${c.cyan}Prices${c.reset}       "What's the current BTC price?"
+                 "Compare ETH prices across all my exchanges"
+                 "Alert me when SOL drops below $100"
+
+    ${c.cyan}Trading${c.reset}      "Buy 0.1 ETH at market price"
+                 "Place a limit order for BTC at $40,000"
+                 "What are my open orders?"
+
+    ${c.cyan}Analysis${c.reset}     "Find arbitrage opportunities for BTC"
+                 "Which exchange has the lowest fees?"
+                 "Show my trade history for this week"
+
+  ${c.white}${c.bold}SECURITY${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
+
+    ${c.green}✓${c.reset} Keys stored locally at ${c.dim}~/.omnitrade/config.json${c.reset}
+    ${c.green}✓${c.reset} Never transmitted anywhere — runs 100% on your machine
+    ${c.green}✓${c.reset} We recommend: ${c.white}read + trade only${c.reset}, ${c.red}never withdrawals${c.reset}
 
   ${c.white}${c.bold}LINKS${c.reset}
-  ${c.gray}─────────────────────────────────────────────────────${c.reset}
+  ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-    ${c.blue}Docs:${c.reset}   github.com/Connectry-io/omnitrade-mcp
-    ${c.blue}Claude:${c.reset} claude.ai/download
+    ${c.blue}Docs${c.reset}     github.com/Connectry-io/omnitrade-mcp
+    ${c.blue}Claude${c.reset}   claude.ai/download
+    ${c.blue}Support${c.reset}  discord.gg/connectry
 
 `);
 }
