@@ -34,6 +34,8 @@
 
 ---
 
+> ⚠️ **Disclaimer:** OmniTrade is a developer tool and does not constitute financial advice. Cryptocurrency trading involves substantial risk. Connectry Labs is not a licensed financial advisor. Always do your own research and consult a qualified financial advisor before making investment decisions. [Use at your own risk.](https://github.com/Connectry-io/omnitrade-mcp/blob/main/LICENSE)
+
 ## 💬 What is OmniTrade?
 
 OmniTrade is an [MCP](https://modelcontextprotocol.io/) server that lets you trade cryptocurrency using natural language through Claude. No more juggling exchange dashboards — just tell Claude what you want:
@@ -499,7 +501,7 @@ node dist/cli.js setup
 
 ## 📄 License
 
-MIT © [Connectry Labs](https://connectry.io)
+MIT © [Connectry Labs](https://connectry.io/labs)
 
 <br />
 
@@ -513,12 +515,26 @@ MIT © [Connectry Labs](https://connectry.io)
 
 ---
 
+## ⚠️ Disclaimer
+
+OmniTrade is an experimental developer tool provided under the MIT License. It does not constitute financial advice, investment advice, or any other form of advice. **Connectry Labs is not a licensed financial advisor.** Cryptocurrency trading involves substantial risk of loss and is not appropriate for all investors.
+
+- Past performance is not indicative of future results
+- You are solely responsible for your trading decisions
+- Always conduct your own research
+- Consult a qualified financial advisor before investing
+- Never trade more than you can afford to lose
+
+OmniTrade is a project by [Connectry Labs](https://connectry.io/labs) — the innovation lab of [Connectry](https://connectry.io).
+
+<br />
+
 <p align="center">
-  <sub>Built with ⚡ by <a href="https://connectry.io">Connectry Labs</a></sub>
+  <sub>Built with ⚡ by <a href="https://connectry.io/labs">Connectry Labs</a></sub>
 </p>
 
 <p align="center">
   <a href="https://github.com/Connectry-io/omnitrade-mcp">GitHub</a> •
   <a href="https://www.npmjs.com/package/omnitrade-mcp">npm</a> •
-  <a href="https://connectry.io">Website</a>
+  <a href="https://connectry.io/labs/omnitrade">Website</a>
 </p>
