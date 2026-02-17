@@ -534,15 +534,18 @@ async function runSetupWizard(): Promise<void> {
       testnet = testnetAnswer.toLowerCase() === 'y';
     }
 
-    // Add to config
-    (config.exchanges as Record<string, unknown>)[exchange] = {
-      apiKey: apiKey.trim(),
-      secret: secret.trim(),
-      ...(password.trim() ? { password: password.trim() } : {}),
-      testnet,
-    };
-
-    console.log(`  ${c.green}✓${c.reset} ${displayName} configured!`);
+    // Add to config (only if keys provided)
+    if (apiKey.trim() && secret.trim()) {
+      (config.exchanges as Record<string, unknown>)[exchange] = {
+        apiKey: apiKey.trim(),
+        secret: secret.trim(),
+        ...(password.trim() ? { password: password.trim() } : {}),
+        testnet,
+      };
+      console.log(`  ${c.green}✓${c.reset} ${displayName} configured!`);
+    } else {
+      console.log(`  ${c.yellow}⚠${c.reset} ${displayName} skipped (no keys provided)`);
+    }
   }
 
   rl.close();
@@ -555,14 +558,25 @@ async function runSetupWizard(): Promise<void> {
     } catch {}
   }
   
-  // Merge exchanges
+  // Merge exchanges and filter out any with empty keys
+  const allExchanges = {
+    ...((existingConfig.exchanges as Record<string, unknown>) || {}),
+    ...((config.exchanges as Record<string, unknown>) || {}),
+  };
+  
+  // Remove exchanges with empty apiKey or secret
+  const validExchanges: Record<string, unknown> = {};
+  for (const [name, cfg] of Object.entries(allExchanges)) {
+    const exchCfg = cfg as { apiKey?: string; secret?: string };
+    if (exchCfg.apiKey?.trim() && exchCfg.secret?.trim()) {
+      validExchanges[name] = cfg;
+    }
+  }
+  
   const mergedConfig = {
     ...existingConfig,
     ...config,
-    exchanges: {
-      ...((existingConfig.exchanges as Record<string, unknown>) || {}),
-      ...((config.exchanges as Record<string, unknown>) || {}),
-    },
+    exchanges: validExchanges,
   };
 
   // Save config
