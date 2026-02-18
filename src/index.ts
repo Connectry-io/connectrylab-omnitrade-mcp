@@ -25,7 +25,7 @@ import { registerRebalanceTools } from './tools/rebalance.js';
 import { registerDCATools } from './tools/dca.js';
 import { registerConditionalOrderTools } from './tools/conditional-orders.js';
 
-const VERSION = '0.9.3';
+const VERSION = '0.9.4';
 
 /**
  * Display startup banner
@@ -34,19 +34,16 @@ function showBanner(): void {
   const purple = '\x1b[35m';
   const reset = '\x1b[0m';
   console.error(`
-╔═════════════════════════════════════════════════════════════════════════════╗
-║                                                                             ║
-║  ${purple}██████╗ ${reset}███╗   ███╗███╗   ██╗██╗████████╗██████╗  █████╗ ██████╗ ███████╗  ║
-║  ${purple}██╔══██╗${reset}████╗ ████║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝  ║
-║  ${purple}██║  ██║${reset}██╔████╔██║██╔██╗ ██║██║   ██║   ██████╔╝███████║██║  ██║█████╗    ║
-║  ${purple}██║  ██║${reset}██║╚██╔╝██║██║╚██╗██║██║   ██║   ██╔══██╗██╔══██║██║  ██║██╔══╝    ║
-║  ${purple}██████╔╝${reset}██║ ╚═╝ ██║██║ ╚████║██║   ██║   ██║  ██║██║  ██║██████╔╝███████╗  ║
-║  ${purple}╚═════╝ ${reset}╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝  ║
-║                                                                             ║
-║   MCP Server v${VERSION}  •  One AI. 107 Exchanges. Natural language trading.   ║
-║   by Connectry Labs  •  https://connectry.io                                ║
-║                                                                             ║
-╚═════════════════════════════════════════════════════════════════════════════╝
+  ${purple}██████╗ ${reset}███╗   ███╗███╗   ██╗██╗████████╗██████╗  █████╗ ██████╗ ███████╗
+  ${purple}██╔══██╗${reset}████╗ ████║████╗  ██║██║╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝
+  ${purple}██║  ██║${reset}██╔████╔██║██╔██╗ ██║██║   ██║   ██████╔╝███████║██║  ██║█████╗
+  ${purple}██║  ██║${reset}██║╚██╔╝██║██║╚██╗██║██║   ██║   ██╔══██╗██╔══██║██║  ██║██╔══╝
+  ${purple}██████╔╝${reset}██║ ╚═╝ ██║██║ ╚████║██║   ██║   ██║  ██║██║  ██║██████╔╝███████╗
+  ${purple}╚═════╝ ${reset}╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚══════╝
+
+  MCP Server v${VERSION}  •  One AI. 107 Exchanges. Natural language trading.
+  by Connectry Labs  •  https://connectry.io
+  ${'─'.repeat(75)}
 `);
 }
 
