@@ -40,12 +40,30 @@ interface AlertsData {
   alerts: PriceAlert[];
 }
 
+interface DCAConfig {
+  id: string;
+  symbol: string;
+  exchange: string;
+  amountUSD: number;
+  frequency: 'hourly' | 'daily' | 'weekly' | 'monthly';
+  enabled: boolean;
+  createdAt: number;
+  lastExecuted?: number;
+  totalExecutions: number;
+  totalSpent: number;
+}
+
+interface DCAData {
+  configs: DCAConfig[];
+}
+
 // ============================================
 // File paths
 // ============================================
 
 const OMNITRADE_DIR = join(homedir(), '.omnitrade');
 const ALERTS_FILE = join(OMNITRADE_DIR, 'alerts.json');
+const DCA_FILE = join(OMNITRADE_DIR, 'dca.json');
 const LOG_FILE = join(OMNITRADE_DIR, 'daemon.log');
 
 // ============================================
@@ -88,6 +106,139 @@ async function loadAlerts(): Promise<AlertsData> {
 async function saveAlerts(data: AlertsData): Promise<void> {
   await fs.mkdir(OMNITRADE_DIR, { recursive: true });
   await fs.writeFile(ALERTS_FILE, JSON.stringify(data, null, 2));
+}
+
+// ============================================
+// DCA loading / saving
+// ============================================
+
+async function loadDCAConfigs(): Promise<DCAData> {
+  if (!existsSync(DCA_FILE)) {
+    return { configs: [] };
+  }
+  try {
+    const raw = await fs.readFile(DCA_FILE, 'utf-8');
+    return JSON.parse(raw) as DCAData;
+  } catch {
+    return { configs: [] };
+  }
+}
+
+async function saveDCAConfigs(data: DCAData): Promise<void> {
+  await fs.mkdir(OMNITRADE_DIR, { recursive: true });
+  await fs.writeFile(DCA_FILE, JSON.stringify(data, null, 2));
+}
+
+// ============================================
+// DCA frequency helpers
+// ============================================
+
+function getDCAFrequencyMs(frequency: DCAConfig['frequency']): number {
+  const intervals: Record<DCAConfig['frequency'], number> = {
+    hourly: 60 * 60 * 1000,
+    daily: 24 * 60 * 60 * 1000,
+    weekly: 7 * 24 * 60 * 60 * 1000,
+    monthly: 30 * 24 * 60 * 60 * 1000,
+  };
+  return intervals[frequency];
+}
+
+function isDCADue(dca: DCAConfig, now: number): boolean {
+  if (!dca.enabled) return false;
+  if (!dca.lastExecuted) return true; // Never executed — due immediately
+  return (now - dca.lastExecuted) >= getDCAFrequencyMs(dca.frequency);
+}
+
+// ============================================
+// DCA poll function
+// ============================================
+
+async function pollAndCheckDCAs(
+  exchanges: Map<string, Exchange>,
+  config: Awaited<ReturnType<typeof loadConfig>>
+): Promise<void> {
+  const data = await loadDCAConfigs();
+  const now = Date.now();
+
+  const dueDCAs = data.configs.filter((d) => isDCADue(d, now));
+
+  if (dueDCAs.length === 0) {
+    log(`DCA check — no orders due`);
+    return;
+  }
+
+  log(`DCA check — ${dueDCAs.length} order(s) due`);
+
+  for (const dca of dueDCAs) {
+    const exchange = exchanges.get(dca.exchange);
+
+    if (!exchange) {
+      log(`  ⚠ DCA ${dca.id}: exchange ${dca.exchange} not available — skipping`);
+      continue;
+    }
+
+    try {
+      // Fetch live price
+      const ticker = await exchange.fetchTicker(dca.symbol);
+      const price = ticker.last ?? 0;
+
+      if (price <= 0) {
+        log(`  ⚠ DCA ${dca.id}: invalid price for ${dca.symbol} — skipping`);
+        continue;
+      }
+
+      // Check if exchange has real credentials configured
+      const exchCfg = config.exchanges[dca.exchange];
+      const hasCredentials = !!(exchCfg?.apiKey && exchCfg?.secret);
+
+      let spent = dca.amountUSD;
+
+      if (hasCredentials) {
+        // Place real market buy order
+        try {
+          const amount = dca.amountUSD / price;
+          const order = await exchange.createMarketBuyOrder(dca.symbol, amount);
+          spent = (order.cost as number) ?? dca.amountUSD;
+          log(`  ✓ DCA ${dca.id}: REAL buy ${dca.symbol} — $${spent.toFixed(2)} at $${price.toFixed(2)} (order: ${order.id})`);
+        } catch (orderErr) {
+          log(`  ⚠ DCA ${dca.id}: real order failed, logging as simulated: ${(orderErr as Error).message}`);
+          // Fall through — still log as simulated and update state
+        }
+      } else {
+        // Simulate the buy (paper)
+        log(`  ✓ DCA ${dca.id}: SIMULATED buy ${dca.symbol} — $${dca.amountUSD.toFixed(2)} at $${price.toFixed(2)} [no credentials]`);
+      }
+
+      // Update DCA record
+      dca.lastExecuted = now;
+      dca.totalExecutions += 1;
+      dca.totalSpent += spent;
+
+      // Send notification
+      const baseAsset = dca.symbol.split('/')[0] ?? dca.symbol;
+      const title = `OmniTrade DCA: ${baseAsset}`;
+      const message = `DCA executed: bought $${dca.amountUSD} of ${baseAsset} at $${price.toFixed(2)} on ${dca.exchange}`;
+
+      const results = await sendNotification(config.notifications, title, message);
+      for (const result of results) {
+        if (result.success) {
+          log(`  ✓ DCA notification sent via ${result.channel}`);
+        } else {
+          log(`  ✗ DCA notification failed via ${result.channel}: ${result.error}`);
+        }
+      }
+
+      if (results.length === 0) {
+        log(`  ℹ DCA: no notification channels configured`);
+      }
+    } catch (err) {
+      log(`  ✗ DCA ${dca.id}: error — ${(err as Error).message}`);
+    }
+  }
+
+  // Save updated DCA states
+  await saveDCAConfigs(data);
+  log(`DCA check complete — ${dueDCAs.length} processed`);
 }
 
 // ============================================
@@ -242,7 +393,14 @@ export async function startDaemon(): Promise<void> {
   try {
     await pollAndCheckAlerts(exchanges, config);
   } catch (err) {
-    log(`Poll error: ${(err as Error).message}`);
+    log(`Alert poll error: ${(err as Error).message}`);
+  }
+
+  // Initial DCA check immediately on start
+  try {
+    await pollAndCheckDCAs(exchanges, config);
+  } catch (err) {
+    log(`DCA poll error: ${(err as Error).message}`);
   }
 
   // Schedule regular polling
@@ -250,7 +408,12 @@ export async function startDaemon(): Promise<void> {
     try {
       await pollAndCheckAlerts(exchanges, config);
     } catch (err) {
-      log(`Poll error: ${(err as Error).message}`);
+      log(`Alert poll error: ${(err as Error).message}`);
+    }
+    try {
+      await pollAndCheckDCAs(exchanges, config);
+    } catch (err) {
+      log(`DCA poll error: ${(err as Error).message}`);
     }
   }, pollInterval);
 

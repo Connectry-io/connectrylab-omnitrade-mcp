@@ -24,8 +24,11 @@ import { registerPortfolioHistoryTools } from './tools/portfolio-history.js';
 import { registerRebalanceTools } from './tools/rebalance.js';
 import { registerDCATools } from './tools/dca.js';
 import { registerConditionalOrderTools } from './tools/conditional-orders.js';
+import { createRequire } from 'module';
 
-const VERSION = '0.9.4';
+const _require = createRequire(import.meta.url);
+const _pkg = _require('../package.json') as { version: string };
+const VERSION = _pkg.version;
 
 /**
  * Display startup banner

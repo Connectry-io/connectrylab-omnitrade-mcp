@@ -15,10 +15,12 @@ import {
   isProcessRunning,
   getDaemonUptime,
   formatUptime,
-  PID_FILE,
 } from './daemon/pid.js';
+import { createRequire } from 'module';
 
-const VERSION = '0.9.4';
+const _require = createRequire(import.meta.url);
+const _pkg = _require('../package.json') as { version: string };
+const VERSION = _pkg.version;
 const CONFIG_PATH = join(homedir(), '.omnitrade', 'config.json');
 
 // ============================================
@@ -60,6 +62,41 @@ function center(text: string, width: number): string {
   const leftPad = Math.floor(totalPadding / 2);
   const rightPad = totalPadding - leftPad;
   return ' '.repeat(Math.max(0, leftPad)) + text + ' '.repeat(Math.max(0, rightPad));
+}
+
+// ============================================
+// MASKED INPUT (password-style)
+// ============================================
+
+async function maskedQuestion(prompt: string): Promise<string> {
+  return new Promise((resolve) => {
+    process.stdout.write(prompt);
+    let input = '';
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', function handler(char: string) {
+      if (char === '\r' || char === '\n') {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
+        process.stdin.removeListener('data', handler);
+        process.stdout.write('\n');
+        resolve(input);
+      } else if (char === '\u0003') {
+        process.exit();
+      } else if (char === '\u007f') {
+        if (input.length > 0) {
+          input = input.slice(0, -1);
+          process.stdout.clearLine(0);
+          process.stdout.cursorTo(0);
+          process.stdout.write(prompt + '*'.repeat(input.length));
+        }
+      } else {
+        input += char;
+        process.stdout.write('*');
+      }
+    });
+  });
 }
 
 function printLogo(): void {
@@ -487,6 +524,16 @@ async function runSetupWizard(): Promise<void> {
   ${c.green}✓${c.reset} Selected: ${selectedExchanges.map(e => e.info?.name || e.id).join(', ')}
 `);
 
+  // Load existing config for skip detection
+  let existingConfigForSkip: Record<string, unknown> = {};
+  if (existsSync(CONFIG_PATH)) {
+    try {
+      const raw = readFileSync(CONFIG_PATH, 'utf-8');
+      existingConfigForSkip = JSON.parse(raw);
+    } catch {}
+  }
+  const existingExchanges = (existingConfigForSkip.exchanges as Record<string, { apiKey?: string; secret?: string }>) || {};
+
   // Collect keys for each exchange
   const config: Record<string, unknown> = {
     exchanges: {},
@@ -507,6 +554,19 @@ async function runSetupWizard(): Promise<void> {
   ${c.white}${c.bold}STEP ${stepNum}/${totalSteps} — ${displayName} API KEYS${c.reset}
   ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 `);
+
+    // UX 1: Check if this exchange is already configured — offer to skip
+    const existing = existingExchanges[exchange];
+    if (existing?.apiKey?.trim() && existing?.secret?.trim()) {
+      const maskedKey = `${existing.apiKey.slice(0, 5)}...${existing.apiKey.slice(-5)}`;
+      console.log(`  ${c.green}✓${c.reset} ${displayName} already configured ${c.dim}(apiKey: ${maskedKey})${c.reset}`);
+      const keepAnswer = await question(`  ${c.yellow}?${c.reset} Keep existing keys? ${c.dim}(Y/n)${c.reset}: `);
+      if (keepAnswer.toLowerCase() !== 'n') {
+        (config.exchanges as Record<string, unknown>)[exchange] = existing;
+        console.log(`  ${c.green}✓${c.reset} ${displayName} kept (existing keys)`);
+        continue;
+      }
+    }
 
     if (exchangeInfo) {
       console.log(`  ${c.dim}Create API keys at:${c.reset} ${c.blue}${exchangeInfo.apiUrl}${c.reset}\n`);
@@ -530,18 +590,18 @@ async function runSetupWizard(): Promise<void> {
 
     await question(`  ${c.dim}Press Enter when you have your keys...${c.reset}`);
 
-    // Enter Keys
+    // Enter Keys — UX 2: masked input for sensitive fields
     console.log(`
   ${c.dim}Paste your ${displayName} credentials:${c.reset}
 `);
 
-    const apiKey = await question(`  ${c.cyan}API Key:${c.reset}    `);
-    const secret = await question(`  ${c.cyan}Secret:${c.reset}     `);
+    const apiKey = await maskedQuestion(`  ${c.cyan}API Key:${c.reset}    `);
+    const secret = await maskedQuestion(`  ${c.cyan}Secret:${c.reset}     `);
     
     let password = '';
     const needsPassphrase = exchangeInfo?.needsPassphrase || ['coinbase', 'kucoin', 'okx', 'bitget'].includes(exchange);
     if (needsPassphrase) {
-      password = await question(`  ${c.cyan}Passphrase:${c.reset} `);
+      password = await maskedQuestion(`  ${c.cyan}Passphrase:${c.reset} `);
     }
     
     // Testnet option
@@ -1224,16 +1284,25 @@ async function setupNotifications(
   ${c.white}${c.bold}TELEGRAM SETUP${c.reset}
   ${c.gray}─────────────────────────────────────────────────────────${c.reset}
 
-  ${c.cyan}1.${c.reset} Open Telegram and message ${c.white}@BotFather${c.reset}
+  ${c.white}${c.bold}STEP 1 — CREATE YOUR BOT${c.reset}
+  ${c.cyan}1.${c.reset} Open Telegram → search ${c.white}@BotFather${c.reset} → start a chat
   ${c.cyan}2.${c.reset} Send: ${c.white}/newbot${c.reset}
-  ${c.cyan}3.${c.reset} Follow prompts to create your bot
-  ${c.cyan}4.${c.reset} Copy the ${c.white}HTTP API token${c.reset} BotFather gives you
-  ${c.cyan}5.${c.reset} Send ${c.white}/start${c.reset} to your new bot
-  ${c.cyan}6.${c.reset} Visit: ${c.blue}https://api.telegram.org/bot<TOKEN>/getUpdates${c.reset}
-     Copy the ${c.white}chat.id${c.reset} number from the response
+  ${c.cyan}3.${c.reset} Follow prompts (choose a name and username for your bot)
+  ${c.cyan}4.${c.reset} BotFather gives you a ${c.white}Bot Token${c.reset} — it looks like this:
+     ${c.dim}7481234567:AAHdqTcvCH1vGWJxfSeofSH2Y34H4ouyJe4${c.reset}
+  Copy it.
+
+  ${c.white}${c.bold}STEP 2 — GET YOUR CHAT ID${c.reset}
+  ${c.cyan}1.${c.reset} In Telegram, search for ${c.white}YOUR BOT${c.reset} by its @username
+  ${c.cyan}2.${c.reset} Open the chat with it
+  ${c.cyan}3.${c.reset} Send any message (type "hi" and hit send)
+  ${c.cyan}4.${c.reset} Visit this URL in your browser (replace TOKEN with yours):
+     ${c.blue}https://api.telegram.org/bot<TOKEN>/getUpdates${c.reset}
+  ${c.cyan}5.${c.reset} Look for ${c.white}"chat": {"id": 1554736939 ...}${c.reset}
+     That number is your ${c.white}Chat ID${c.reset}.
 
 `);
-    const botToken = await question(`  ${c.cyan}Bot token:${c.reset}  `);
+    const botToken = await maskedQuestion(`  ${c.cyan}Bot token:${c.reset}  `);
     const chatId = await question(`  ${c.cyan}Chat ID:${c.reset}    `);
 
     if (botToken.trim() && chatId.trim()) {
@@ -1276,7 +1345,7 @@ async function setupNotifications(
   ${c.cyan}3.${c.reset} Name it "OmniTrade" and copy the Webhook URL
 
 `);
-    const webhookUrl = await question(`  ${c.cyan}Webhook URL:${c.reset} `);
+    const webhookUrl = await maskedQuestion(`  ${c.cyan}Webhook URL:${c.reset} `);
 
     if (webhookUrl.trim()) {
       process.stdout.write(`  Verifying... `);
@@ -1411,18 +1480,35 @@ async function runDashboard(args: string[]): Promise<void> {
   const symbolIdx = args.indexOf('--symbol');
   const chartSymbol = symbolIdx !== -1 ? (args[symbolIdx + 1] ?? 'BTC').toUpperCase() : 'BTC';
 
+  // Optional: --symbols BTC ETH SOL to override price table symbols
+  const symbolsIdx = args.indexOf('--symbols');
+  let customSymbols: string[] | undefined;
+  if (symbolsIdx !== -1) {
+    const symbolArgs: string[] = [];
+    for (let i = symbolsIdx + 1; i < args.length; i++) {
+      if (args[i]!.startsWith('--')) break;
+      symbolArgs.push(args[i]!.toUpperCase());
+    }
+    if (symbolArgs.length > 0) customSymbols = symbolArgs;
+  }
+
   // Optional: --refresh 5 to change poll interval (seconds)
   const refreshIdx = args.indexOf('--refresh');
   const refreshSec = refreshIdx !== -1 ? parseInt(args[refreshIdx + 1] ?? '8', 10) : 8;
 
+  // Optional: --live to use real exchange balances
+  const live = args.includes('--live');
+
   console.log(`${c.cyan}Starting OmniTrade Dashboard...${c.reset}`);
-  console.log(`${c.dim}Chart: ${chartSymbol}/USDT  │  Refresh: ${refreshSec}s  │  Press q to quit${c.reset}\n`);
+  console.log(`${c.dim}Chart: ${chartSymbol}/USDT  │  Refresh: ${refreshSec}s  │  Mode: ${live ? 'LIVE' : 'paper'}  │  Press q to quit${c.reset}\n`);
 
   try {
     const { startDashboard } = await import('./dashboard/index.js');
     await startDashboard({
       chartSymbol,
       refreshMs: refreshSec * 1000,
+      live,
+      ...(customSymbols ? { symbols: customSymbols } : {}),
     });
   } catch (err) {
     console.error(`${c.red}Dashboard error:${c.reset}`, (err as Error).message);
@@ -1610,26 +1696,29 @@ ${c.gray}───────────────────────�
 
     // ── paper reset ───────────────────────────────────────────
     case 'reset': {
-      const { existsSync, unlinkSync } = await import('fs');
-      const { homedir } = await import('os');
-      const { join } = await import('path');
-      const walletPath = join(homedir(), '.omnitrade', 'paper-wallet.json');
-
-      if (!existsSync(walletPath)) {
-        console.log(`\n${c.yellow}⚠${c.reset} No paper wallet found.\n`);
-        return;
-      }
+      const { existsSync: fsExists, unlinkSync } = await import('fs');
+      const { homedir: hd } = await import('os');
+      const { join: pjoin } = await import('path');
+      const walletPath = pjoin(hd(), '.omnitrade', 'paper-wallet.json');
 
       const rl = (await import('readline')).createInterface({ input: process.stdin, output: process.stdout });
-      const answer = await new Promise<string>((r) => rl.question(`\n${c.yellow}⚠ Reset paper wallet? This clears all trades and restarts with $10,000 (y/N): ${c.reset}`, r));
+      const walletExists = fsExists(walletPath);
+      const promptMsg = walletExists
+        ? `\n${c.yellow}⚠ Reset paper wallet? This clears all trades and restarts with $10,000 (y/N): ${c.reset}`
+        : `\n${c.yellow}? No paper wallet found. Create a fresh $10,000 wallet? (Y/n): ${c.reset}`;
+      const answer = await new Promise<string>((r) => rl.question(promptMsg, r));
       rl.close();
 
-      if (answer.toLowerCase() === 'y') {
-        unlinkSync(walletPath);
+      const confirmed = walletExists
+        ? answer.toLowerCase() === 'y'
+        : answer.toLowerCase() !== 'n';
+
+      if (confirmed) {
+        if (walletExists) unlinkSync(walletPath);
         loadWallet(); // Creates a fresh wallet
         console.log(`\n${c.green}✓ Paper wallet reset to $10,000 USDT${c.reset}\n`);
       } else {
-        console.log(`${c.dim}Reset cancelled.${c.reset}\n`);
+        console.log(`${c.dim}Cancelled.${c.reset}\n`);
       }
       break;
     }
