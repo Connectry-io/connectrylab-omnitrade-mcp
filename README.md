@@ -1,9 +1,9 @@
 <p align="center">
   <br />
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Connectry-io/omnitrade-mcp/main/.github/assets/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Connectry-io/omnitrade-mcp/main/.github/assets/logo-light.svg">
-    <img alt="OmniTrade" src="https://raw.githubusercontent.com/Connectry-io/omnitrade-mcp/main/.github/assets/logo-dark.svg" width="350">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Connectry-io/connectrylab-omnitrade-mcp/main/.github/assets/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Connectry-io/connectrylab-omnitrade-mcp/main/.github/assets/logo-light.svg">
+    <img alt="OmniTrade" src="https://raw.githubusercontent.com/Connectry-io/connectrylab-omnitrade-mcp/main/.github/assets/logo-dark.svg" width="350">
   </picture>
   <br />
 </p>
@@ -20,13 +20,14 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/omnitrade-mcp"><img src="https://img.shields.io/npm/v/omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/omnitrade-mcp"><img src="https://img.shields.io/npm/dm/omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="npm downloads"></a>
-  <a href="https://github.com/Connectry-io/omnitrade-mcp"><img src="https://img.shields.io/github/stars/Connectry-io/omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="GitHub stars"></a>
-  <a href="https://github.com/Connectry-io/omnitrade-mcp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Connectry-io/omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="License"></a>
+  <a href="https://github.com/Connectry-io/connectrylab-omnitrade-mcp"><img src="https://img.shields.io/github/stars/Connectry-io/connectrylab-omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="GitHub stars"></a>
+  <a href="https://github.com/Connectry-io/connectrylab-omnitrade-mcp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Connectry-io/connectrylab-omnitrade-mcp?style=flat&colorA=18181B&colorB=28CF8D" alt="License"></a>
 </p>
 
 <p align="center">
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-features">Features</a> •
+  <a href="#-desktop-app">Desktop App</a> •
   <a href="#-examples">Examples</a> •
   <a href="#-tui-dashboard">Dashboard</a> •
   <a href="#-paper-trading">Paper Trading</a> •
@@ -36,7 +37,7 @@
 
 ---
 
-> ⚠️ **Disclaimer:** OmniTrade is a developer tool and does not constitute financial advice. Cryptocurrency trading involves substantial risk. Connectry Labs is not a licensed financial advisor. Always do your own research and consult a qualified financial advisor before making investment decisions. [Use at your own risk.](https://github.com/Connectry-io/omnitrade-mcp/blob/main/LICENSE)
+> ⚠️ **Disclaimer:** OmniTrade is a developer tool and does not constitute financial advice. Cryptocurrency trading involves substantial risk. Connectry Labs is not a licensed financial advisor. Always do your own research and consult a qualified financial advisor before making investment decisions. [Use at your own risk.](https://github.com/Connectry-io/connectrylab-omnitrade-mcp/blob/main/LICENSE)
 
 ## 💬 What is OmniTrade?
 
@@ -118,6 +119,25 @@ Practice risk-free with a virtual $10,000 USDT wallet. Buy and sell at live mark
 </table>
 
 <br />
+
+## 🖥️ Desktop App
+
+OmniTrade ships a native desktop GUI built with Tauri — Dashboard, Prices, Portfolio, Alerts, DCA, and Settings in a standalone app.
+
+### Download
+
+| Platform | File | Notes |
+|----------|------|-------|
+| macOS | `.dmg` | Upcoming — built automatically on each release |
+| Linux (portable) | `.AppImage` | Run without installing |
+| Linux (Debian/Ubuntu) | `.deb` | `dpkg -i OmniTrade_*.deb` |
+| Linux (RedHat/Fedora) | `.rpm` | `rpm -i OmniTrade-*.rpm` |
+
+👉 **[Download from GitHub Releases](https://github.com/Connectry-io/connectrylab-omnitrade-mcp/releases)**
+
+The desktop app reads your existing `~/.omnitrade/config.json` — no extra setup needed after running `omnitrade setup`.
+
+---
 
 ## 🚀 Quick Start
 
@@ -499,12 +519,16 @@ The wizard walks you through:
 | Channel | How to configure |
 |---------|-----------------|
 | **Native OS** | Zero setup — uses system notifications on macOS, Windows, and Linux |
-| **Telegram** | Create a bot via [@BotFather](https://t.me/BotFather), get your token + chat ID |
+| **Telegram** | Create a bot via [@BotFather](https://t.me/BotFather) → get the **Bot Token** (long string like `7481234567:AAHdqTcvCH1v...`), then get your **Chat ID** (numeric, from the getUpdates URL) |
 | **Discord** | Create a webhook in your server's channel settings, paste the URL |
+
+> **API key input:** Keys and secrets are masked as you type — nothing shown in plaintext in the terminal.
 
 4. **Claude integration** — auto-writes to Claude Desktop config and optionally `~/.claude/settings.json` for Claude Code
 
 You can re-run `omnitrade setup` at any time to update credentials or add new notification channels.
+
+> **Tip:** Re-running setup won't wipe your existing config. It detects your current keys and lets you keep, update, or skip each exchange individually.
 
 ### Dashboard — Full-Screen TUI *(v0.9.0)*
 
@@ -677,7 +701,7 @@ OmniTrade provides **40 tools** organized by category:
 - ✅ **API keys stay on your machine** — Never sent anywhere else
 - ✅ **No cloud storage** — Everything local
 - ✅ **No telemetry** — Zero data collection
-- ✅ **Open source** — [Audit the code yourself](https://github.com/Connectry-io/omnitrade-mcp)
+- ✅ **Open source** — [Audit the code yourself](https://github.com/Connectry-io/connectrylab-omnitrade-mcp)
 
 ### API Key Best Practices
 
@@ -741,7 +765,7 @@ We love contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ```bash
 # Clone the repo
-git clone https://github.com/Connectry-io/omnitrade-mcp.git
+git clone https://github.com/Connectry-io/connectrylab-omnitrade-mcp.git
 cd omnitrade-mcp
 
 # Install dependencies
@@ -791,7 +815,7 @@ OmniTrade is a project by [Connectry Labs](https://connectry.io/labs) — the in
 </p>
 
 <p align="center">
-  <a href="https://github.com/Connectry-io/omnitrade-mcp">GitHub</a> •
+  <a href="https://github.com/Connectry-io/connectrylab-omnitrade-mcp">GitHub</a> •
   <a href="https://www.npmjs.com/package/omnitrade-mcp">npm</a> •
   <a href="https://connectry.io/labs/omnitrade">Website</a>
 </p>
