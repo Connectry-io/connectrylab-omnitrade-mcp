@@ -23,6 +23,10 @@ jobs:
             runner: macos-latest
             bundle: dmg
             artifact: '*.dmg'
+          - platform: Windows
+            runner: windows-latest
+            bundle: msi,nsis
+            artifact: '*.msi,*.exe'
           - platform: Linux
             runner: ubuntu-22.04
             bundle: deb,appimage
@@ -88,6 +92,7 @@ jobs:
             | Platform | File |
             |----------|------|
             | macOS | `.dmg` |
+            | Windows | `.msi` / `.exe` |
             | Linux (portable) | `.AppImage` |
             | Linux (Debian/Ubuntu) | `.deb` |
 

@@ -128,7 +128,8 @@ OmniTrade ships a native desktop GUI built with Tauri — Dashboard, Prices, Por
 
 | Platform | File | Notes |
 |----------|------|-------|
-| macOS | `.dmg` | Upcoming — built automatically on each release |
+| macOS | `.dmg` | Built automatically on each release |
+| Windows | `.msi` / `.exe` | Built automatically on each release |
 | Linux (portable) | `.AppImage` | Run without installing |
 | Linux (Debian/Ubuntu) | `.deb` | `dpkg -i OmniTrade_*.deb` |
 | Linux (RedHat/Fedora) | `.rpm` | `rpm -i OmniTrade-*.rpm` |
