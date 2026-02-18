@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+desktop/src-tauri/target/
+desktop/src-tauri/target-release/
 
 # Environment & Config (NEVER commit API keys)
 .env
