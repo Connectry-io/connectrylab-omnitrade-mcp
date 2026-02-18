@@ -1,0 +1,121 @@
+.settings-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.exchanges-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.exchange-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.exchange-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.exchange-name {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.exchange-key {
+  flex: 1;
+  margin: 0 var(--spacing-lg);
+  font-size: 13px;
+}
+
+.exchange-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setting-name {
+  font-weight: 500;
+}
+
+.setting-detail {
+  font-size: 12px;
+}
+
+.setting-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.daemon-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.status-label {
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.status-indicator {
+  font-weight: 500;
+}
+
+.status-indicator.running {
+  color: var(--color-green);
+}
+
+.status-indicator.stopped {
+  color: var(--color-text-muted);
+}
+
+.daemon-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}

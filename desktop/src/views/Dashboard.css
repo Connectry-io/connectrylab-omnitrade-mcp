@@ -1,0 +1,93 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.holdings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.holding-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 100px;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.holding-row:last-child {
+  border-bottom: none;
+}
+
+.holding-asset {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asset-symbol {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.asset-amount {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.holding-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.holding-bar {
+  height: 8px;
+  background: var(--color-surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.holding-bar-fill {
+  height: 100%;
+  background: var(--color-teal);
+  border-radius: 4px;
+  transition: width var(--transition-normal);
+}
+
+.chart-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.chart-area {
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-chart {
+  width: 100%;
+  height: 100%;
+  max-height: 180px;
+}
+
+.activity-panel {
+  max-height: 200px;
+}
+
+.activity-panel .panel-content {
+  overflow-y: auto;
+}

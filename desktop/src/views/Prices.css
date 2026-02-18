@@ -1,0 +1,74 @@
+.prices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.symbol-name {
+  font-weight: 600;
+}
+
+.alert-form-row {
+  background: var(--color-surface-2) !important;
+}
+
+.inline-alert-form {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+}
+
+.alert-symbol {
+  font-weight: 600;
+  color: var(--color-teal);
+  min-width: 100px;
+}
+
+.inline-alert-form .select {
+  width: auto;
+  min-width: 80px;
+}
+
+.price-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.price-prefix {
+  position: absolute;
+  left: var(--spacing-md);
+  color: var(--color-text-muted);
+}
+
+.price-input {
+  padding-left: var(--spacing-lg) !important;
+  width: 120px;
+}
+
+.refresh-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 12px;
+}
+
+.refresh-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -1,0 +1,11 @@
+.dca-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.asset-name {
+  font-weight: 600;
+}
