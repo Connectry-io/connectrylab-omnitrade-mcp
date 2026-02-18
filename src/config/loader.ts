@@ -32,7 +32,7 @@ export function loadConfig(): Config {
       // Validate with Zod
       const result = ConfigSchema.safeParse(parsed);
       if (!result.success) {
-        const errors = result.error.errors
+        const errors = result.error.issues
           .map((e) => `  - ${e.path.join('.')}: ${e.message}`)
           .join('\n');
         throw new Error(`Invalid config at ${configPath}:\n${errors}`);

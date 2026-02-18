@@ -213,7 +213,7 @@ export function registerChartTools(
         }
 
         // Render chart
-        const chart = renderASCIIChart(ohlcv, normalizedSymbol, timeframe);
+        const chart = renderASCIIChart(ohlcv as unknown as number[][], normalizedSymbol, timeframe);
 
         const result = `${chart}\n\nExchange: ${exchangeName} | Data points: ${ohlcv.length}`;
 

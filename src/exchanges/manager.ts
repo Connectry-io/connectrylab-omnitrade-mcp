@@ -46,7 +46,7 @@ export class ExchangeManager {
     }
 
     // Get the exchange class
-    const ExchangeClass = (ccxt as Record<string, typeof Exchange>)[exchangeId];
+    const ExchangeClass = (ccxt as unknown as Record<string, typeof Exchange>)[exchangeId];
     if (!ExchangeClass) {
       console.error(`✗ Could not load exchange class: ${name}`);
       return null;

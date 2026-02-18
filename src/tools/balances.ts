@@ -60,7 +60,7 @@ export function registerBalanceTools(
           const balance = await ex.fetchBalance();
 
           // Process each asset
-          for (const [symbol, total] of Object.entries(balance.total)) {
+          for (const [symbol, total] of Object.entries(balance.total ?? {})) {
             const totalAmount = total as number;
 
             // Skip zero balances if requested
@@ -69,8 +69,8 @@ export function registerBalanceTools(
             // Filter by asset if specified
             if (asset && symbol.toUpperCase() !== asset.toUpperCase()) continue;
 
-            const free = (balance.free[symbol] as number) || 0;
-            const locked = (balance.used[symbol] as number) || 0;
+            const free = ((balance.free ?? {}) as Record<string, number>)[symbol] ?? 0;
+            const locked = ((balance.used ?? {}) as Record<string, number>)[symbol] ?? 0;
 
             balances.push({
               exchange: name,
@@ -137,7 +137,7 @@ export function registerBalanceTools(
         try {
           const balance = await ex.fetchBalance();
 
-          for (const [symbol, total] of Object.entries(balance.total)) {
+          for (const [symbol, total] of Object.entries(balance.total ?? {})) {
             const amount = total as number;
             if (amount === 0) continue;
 

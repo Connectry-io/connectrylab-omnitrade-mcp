@@ -143,6 +143,7 @@ export interface ArbitrageResult {
 // ============================================
 
 export interface ToolResponse {
+  [key: string]: unknown;
   content: Array<{
     type: 'text';
     text: string;

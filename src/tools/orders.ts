@@ -129,7 +129,7 @@ export function registerOrderTools(
           remaining: order.remaining,
           price: order.price ?? order.average,
           cost: order.cost,
-          status: order.status,
+          status: order.status ?? '',
           timestamp: order.timestamp ?? Date.now(),
         };
 
