@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ExchangeManager } from '../exchanges/manager.js';
 import type { ToolResponse } from '../types/index.js';
+import { generateSvgChart } from '../utils/svg-chart.js';
+import { fetchKlines, normalizeBinanceSymbol } from '../paper/wallet.js';
 
 /**
  * Convert timeframe string to milliseconds
@@ -17,104 +19,34 @@ function timeframeToMs(timeframe: string): number {
 }
 
 /**
+ * Map our timeframe labels to Binance kline intervals + candle counts
+ */
+function getBinanceIntervalConfig(timeframe: string): { interval: string; limit: number } {
+  const mapping: Record<string, { interval: string; limit: number }> = {
+    '1h': { interval: '5m', limit: 12 },     // 1h = twelve 5m candles
+    '4h': { interval: '15m', limit: 16 },    // 4h = sixteen 15m candles
+    '24h': { interval: '1h', limit: 24 },    // 24h = 24 hourly candles
+    '7d': { interval: '4h', limit: 42 },     // 7d = 42 four-hourly candles
+  };
+  return mapping[timeframe] ?? { interval: '1h', limit: 24 };
+}
+
+/**
  * Get CCXT timeframe string from our timeframe
  */
 function getCCXTTimeframe(timeframe: string): string {
   const mapping: Record<string, string> = {
-    '1h': '1h',
-    '4h': '4h',
-    '24h': '1d',
-    '7d': '1d',
+    '1h': '5m',
+    '4h': '15m',
+    '24h': '1h',
+    '7d': '4h',
   };
   return mapping[timeframe] ?? '1h';
 }
 
 /**
- * Render ASCII chart from OHLCV data
- */
-function renderASCIIChart(
-  ohlcv: number[][],
-  symbol: string,
-  timeframe: string,
-  width: number = 60,
-  height: number = 15
-): string {
-  if (ohlcv.length === 0) {
-    return 'No data available';
-  }
-
-  // Extract close prices
-  const prices = ohlcv.map((candle) => candle[4]!); // Close price
-
-  // Find min/max for scaling
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const priceRange = maxPrice - minPrice;
-
-  if (priceRange === 0) {
-    return 'Insufficient price movement to display chart';
-  }
-
-  // Scale prices to chart height
-  const scaledPrices = prices.map((price) =>
-    Math.round(((price - minPrice) / priceRange) * (height - 1))
-  );
-
-  // Build chart grid
-  const grid: string[][] = Array(height)
-    .fill(null)
-    .map(() => Array(width).fill(' '));
-
-  // Plot price line
-  const step = Math.max(1, Math.floor(prices.length / width));
-  let x = 0;
-
-  for (let i = 0; i < prices.length && x < width; i += step, x++) {
-    const y = height - 1 - scaledPrices[i]!;
-    if (y >= 0 && y < height) {
-      grid[y]![x] = '█';
-
-      // Fill column below to make it more visible
-      for (let fillY = y + 1; fillY < height; fillY++) {
-        if (grid[fillY]![x] === ' ') {
-          grid[fillY]![x] = '▄';
-        }
-      }
-    }
-  }
-
-  // Add price scale on the right
-  const priceSteps = 5;
-  for (let i = 0; i <= priceSteps; i++) {
-    const y = Math.floor((i * (height - 1)) / priceSteps);
-    const price = maxPrice - (i * priceRange) / priceSteps;
-    const priceStr = `$${price.toFixed(2)}`;
-    grid[y]![width - 1] = '│';
-  }
-
-  // Convert grid to string
-  let chart = '';
-  for (let y = 0; y < height; y++) {
-    chart += grid[y]!.join('') + '\n';
-  }
-
-  // Add title and footer
-  const title = `${symbol} - ${timeframe} Chart`;
-  const firstPrice = prices[0]!;
-  const lastPrice = prices[prices.length - 1]!;
-  const change = lastPrice - firstPrice;
-  const changePercent = ((change / firstPrice) * 100).toFixed(2);
-  const trend = change >= 0 ? '↑' : '↓';
-
-  const header = `╔${'═'.repeat(width)}╗\n║ ${title.padEnd(width - 2)}║\n╠${'═'.repeat(width)}╣\n`;
-  const footer = `╚${'═'.repeat(width)}╝\n`;
-  const stats = `Start: $${firstPrice.toFixed(2)} | End: $${lastPrice.toFixed(2)} | Change: ${trend} ${changePercent}% ($${Math.abs(change).toFixed(2)})`;
-
-  return header + chart + footer + stats;
-}
-
-/**
  * Register chart-related MCP tools
+ * Returns SVG charts for rich rendering in Claude
  */
 export function registerChartTools(
   server: McpServer,
@@ -122,11 +54,11 @@ export function registerChartTools(
 ): void {
   server.tool(
     'get_chart',
-    'Display an ASCII price chart for a cryptocurrency pair. Example: "Show BTC chart last 24h"',
+    'Get an SVG price chart for a cryptocurrency pair. Returns a clean, dark-themed line chart with price history. Example: "Show BTC chart last 24h"',
     {
       symbol: z
         .string()
-        .describe('Trading pair in format "BASE/QUOTE" (e.g., "BTC/USDT")'),
+        .describe('Trading pair in format "BASE/QUOTE" or just the base asset (e.g., "BTC/USDT" or "BTC")'),
       timeframe: z
         .enum(['1h', '4h', '24h', '7d'])
         .default('24h')
@@ -134,108 +66,141 @@ export function registerChartTools(
       exchange: z
         .string()
         .optional()
-        .describe('Specific exchange name. Omit to use first available exchange.'),
+        .describe('Specific exchange name. Omit to use Binance public data (no API key needed).'),
+      width: z
+        .number()
+        .int()
+        .min(400)
+        .max(1600)
+        .default(800)
+        .describe('SVG chart width in pixels (default: 800)'),
+      height: z
+        .number()
+        .int()
+        .min(250)
+        .max(900)
+        .default(420)
+        .describe('SVG chart height in pixels (default: 420)'),
     },
-    async ({ symbol, timeframe, exchange }): Promise<ToolResponse> => {
-      const normalizedSymbol = symbol.toUpperCase();
+    async ({ symbol, timeframe, exchange, width, height }): Promise<ToolResponse> => {
+      const normalizedSymbol = symbol.toUpperCase().includes('/')
+        ? symbol.toUpperCase()
+        : `${symbol.toUpperCase()}/USDT`;
 
-      // Select exchange
-      let selectedExchange;
-      let exchangeName;
+      const baseAsset = normalizedSymbol.split('/')[0]!;
 
-      if (exchange) {
-        selectedExchange = exchangeManager.get(exchange);
-        exchangeName = exchange.toLowerCase();
-        if (!selectedExchange) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `Exchange not configured: ${exchange}. Available: ${exchangeManager.getNames().join(', ')}`,
-              },
-            ],
-            isError: true,
-          };
+      // ── Try configured exchange first, fall back to Binance public API ──
+      let klines: Awaited<ReturnType<typeof fetchKlines>> | null = null;
+      let usedExchange = 'binance';
+
+      // Attempt exchange OHLCV if configured
+      if (exchange || exchangeManager.getAll().size > 0) {
+        try {
+          let selectedExchange;
+          let exchangeName: string;
+
+          if (exchange) {
+            selectedExchange = exchangeManager.get(exchange);
+            exchangeName = exchange.toLowerCase();
+          } else {
+            const firstEntry = Array.from(exchangeManager.getAll().entries())[0];
+            if (firstEntry) {
+              [exchangeName, selectedExchange] = firstEntry;
+            } else {
+              exchangeName = 'binance';
+            }
+          }
+
+          if (selectedExchange?.has.fetchOHLCV) {
+            const ccxtTimeframe = getCCXTTimeframe(timeframe);
+            const now = Date.now();
+            const since = now - timeframeToMs(timeframe);
+            const ohlcv = await selectedExchange.fetchOHLCV(
+              normalizedSymbol,
+              ccxtTimeframe,
+              since
+            );
+
+            if (ohlcv && ohlcv.length > 1) {
+              klines = (ohlcv as unknown as number[][]).map((k) => ({
+                time: k[0]!,
+                open: k[1]!,
+                high: k[2]!,
+                low: k[3]!,
+                close: k[4]!,
+                volume: k[5]!,
+              }));
+              usedExchange = exchangeName!;
+            }
+          }
+        } catch {
+          // Fall through to Binance public API
         }
-      } else {
-        // Use first available exchange
-        const firstEntry = Array.from(exchangeManager.getAll().entries())[0];
-        if (!firstEntry) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: 'No exchanges configured.',
-              },
-            ],
-            isError: true,
-          };
-        }
-        [exchangeName, selectedExchange] = firstEntry;
       }
 
-      // Check if exchange supports OHLCV
-      if (!selectedExchange.has.fetchOHLCV) {
+      // ── Fall back to Binance public API (no auth needed) ─────────────────
+      if (!klines || klines.length < 2) {
+        try {
+          const { interval, limit } = getBinanceIntervalConfig(timeframe);
+          klines = await fetchKlines(baseAsset, interval, limit);
+          usedExchange = 'binance';
+        } catch (err) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `Failed to fetch chart data for ${normalizedSymbol}: ${(err as Error).message}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
+      if (!klines || klines.length < 2) {
         return {
           content: [
             {
               type: 'text',
-              text: `Exchange ${exchangeName} does not support OHLCV data (candles). Try a different exchange.`,
+              text: `No chart data available for ${normalizedSymbol}`,
             },
           ],
           isError: true,
         };
       }
 
-      try {
-        // Calculate time range
-        const now = Date.now();
-        const since = now - timeframeToMs(timeframe);
-        const ccxtTimeframe = getCCXTTimeframe(timeframe);
+      // ── Generate SVG ────────────────────────────────────────────────────
+      const svg = generateSvgChart(klines, {
+        width,
+        height,
+        symbol: normalizedSymbol,
+        timeframe,
+        exchangeName: usedExchange,
+      });
 
-        // Fetch OHLCV data
-        const ohlcv = await selectedExchange.fetchOHLCV(
-          normalizedSymbol,
-          ccxtTimeframe,
-          since
-        );
+      const firstClose = klines[0]!.close;
+      const lastClose = klines[klines.length - 1]!.close;
+      const change = lastClose - firstClose;
+      const changePct = ((change / firstClose) * 100).toFixed(2);
+      const trend = change >= 0 ? '↑' : '↓';
 
-        if (!ohlcv || ohlcv.length === 0) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `No chart data available for ${normalizedSymbol} on ${exchangeName}`,
-              },
-            ],
-            isError: true,
-          };
-        }
+      const summary = [
+        `${normalizedSymbol} — ${timeframe} Chart (${usedExchange})`,
+        `Open: $${firstClose.toFixed(2)} → Close: $${lastClose.toFixed(2)}`,
+        `Change: ${trend} ${changePct}% ($${Math.abs(change).toFixed(2)})`,
+        `Data points: ${klines.length}`,
+        ``,
+        svg,
+      ].join('\n');
 
-        // Render chart
-        const chart = renderASCIIChart(ohlcv as unknown as number[][], normalizedSymbol, timeframe);
-
-        const result = `${chart}\n\nExchange: ${exchangeName} | Data points: ${ohlcv.length}`;
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: result,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Failed to fetch chart data: ${(error as Error).message}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          {
+            type: 'text',
+            text: summary,
+          },
+        ],
+      };
     }
   );
 }

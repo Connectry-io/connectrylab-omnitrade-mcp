@@ -325,6 +325,12 @@ function printHelp(): void {
     ${c.purple}daemon status${c.reset}        Check daemon status + uptime
 
     ${c.yellow}watch${c.reset} ${c.dim}BTC ETH SOL${c.reset}     Live price ticker in terminal
+    ${c.yellow}dashboard${c.reset}            Full-screen TUI dashboard (Bloomberg Terminal)
+
+    ${c.orange}paper buy BTC 0.01${c.reset}  Paper trade — buy 0.01 BTC at market price
+    ${c.orange}paper sell ETH 0.5${c.reset}  Paper trade — sell 0.5 ETH
+    ${c.orange}paper portfolio${c.reset}     Paper portfolio: holdings + P&L
+    ${c.orange}paper history${c.reset}       Paper trade log
 
     ${c.cyan}test${c.reset}                 Verify your exchange connections work
     ${c.cyan}config${c.reset}               View saved API configuration
@@ -1375,6 +1381,20 @@ async function main(): Promise<void> {
       break;
     }
 
+    // ── Dashboard command ─────────────────────────────────────
+    case 'dashboard':
+    case 'dash': {
+      await runDashboard(args.slice(1));
+      break;
+    }
+
+    // ── Paper trading commands ────────────────────────────────
+    case 'paper': {
+      const sub = args[1] || 'help';
+      await runPaperCommand(sub, args.slice(2));
+      break;
+    }
+
     default:
       console.log(`${c.red}Unknown: ${command}${c.reset}\nRun ${c.cyan}omnitrade help${c.reset}\n`);
       process.exit(1);
@@ -1385,3 +1405,258 @@ main().catch((error) => {
   console.error(`${c.red}Error:${c.reset}`, error.message);
   process.exit(1);
 });
+
+// ============================================
+// DASHBOARD COMMAND
+// ============================================
+
+async function runDashboard(args: string[]): Promise<void> {
+  // Optional: --symbol BTC to override chart symbol
+  const symbolIdx = args.indexOf('--symbol');
+  const chartSymbol = symbolIdx !== -1 ? (args[symbolIdx + 1] ?? 'BTC').toUpperCase() : 'BTC';
+
+  // Optional: --refresh 5 to change poll interval (seconds)
+  const refreshIdx = args.indexOf('--refresh');
+  const refreshSec = refreshIdx !== -1 ? parseInt(args[refreshIdx + 1] ?? '8', 10) : 8;
+
+  console.log(`${c.cyan}Starting OmniTrade Dashboard...${c.reset}`);
+  console.log(`${c.dim}Chart: ${chartSymbol}/USDT  │  Refresh: ${refreshSec}s  │  Press q to quit${c.reset}\n`);
+
+  try {
+    const { startDashboard } = await import('./dashboard/index.js');
+    await startDashboard({
+      chartSymbol,
+      refreshMs: refreshSec * 1000,
+    });
+  } catch (err) {
+    console.error(`${c.red}Dashboard error:${c.reset}`, (err as Error).message);
+    console.error(`${c.dim}Make sure you're running in a real terminal (not piped output).${c.reset}`);
+    process.exit(1);
+  }
+}
+
+// ============================================
+// PAPER TRADING COMMANDS
+// ============================================
+
+async function runPaperCommand(sub: string, args: string[]): Promise<void> {
+  const {
+    loadWallet,
+    executeBuy,
+    executeSell,
+    getPortfolioSummary,
+    formatPrice,
+    formatPnl,
+    formatTimestamp,
+  } = await import('./paper/wallet.js');
+
+  switch (sub) {
+    // ── paper buy <ASSET> <AMOUNT> ────────────────────────────
+    case 'buy': {
+      const asset = args[0];
+      const amount = parseFloat(args[1] ?? '');
+
+      if (!asset || isNaN(amount) || amount <= 0) {
+        console.log(`${c.red}Usage:${c.reset} omnitrade paper buy ${c.cyan}<ASSET> <AMOUNT>${c.reset}`);
+        console.log(`${c.dim}Example: omnitrade paper buy BTC 0.01${c.reset}\n`);
+        return;
+      }
+
+      console.log(`\n${c.cyan}Fetching ${asset.toUpperCase()} price...${c.reset}`);
+      try {
+        const wallet = loadWallet();
+        const { trade } = await executeBuy(wallet, asset, amount);
+
+        console.log(`
+${c.green}${c.bold}✓ BUY EXECUTED${c.reset}
+${c.gray}─────────────────────────────────────────────────${c.reset}
+  ${c.cyan}Asset:${c.reset}     ${trade.asset}
+  ${c.cyan}Amount:${c.reset}    ${trade.amount}
+  ${c.cyan}Price:${c.reset}     ${formatPrice(trade.price)}
+  ${c.cyan}Cost:${c.reset}      $${trade.usdtValue.toFixed(2)} + $${trade.fee.toFixed(2)} fee
+  ${c.cyan}Balance:${c.reset}   $${trade.balanceAfter.toFixed(2)} USDT remaining
+  ${c.gray}ID: ${trade.id}${c.reset}
+`);
+      } catch (err) {
+        console.log(`\n${c.red}✗ Buy failed:${c.reset} ${(err as Error).message}\n`);
+      }
+      break;
+    }
+
+    // ── paper sell <ASSET> <AMOUNT> ───────────────────────────
+    case 'sell': {
+      const asset = args[0];
+      const amount = parseFloat(args[1] ?? '');
+
+      if (!asset || isNaN(amount) || amount <= 0) {
+        console.log(`${c.red}Usage:${c.reset} omnitrade paper sell ${c.cyan}<ASSET> <AMOUNT>${c.reset}`);
+        console.log(`${c.dim}Example: omnitrade paper sell ETH 0.5${c.reset}\n`);
+        return;
+      }
+
+      console.log(`\n${c.cyan}Fetching ${asset.toUpperCase()} price...${c.reset}`);
+      try {
+        const wallet = loadWallet();
+        const { trade } = await executeSell(wallet, asset, amount);
+
+        console.log(`
+${c.green}${c.bold}✓ SELL EXECUTED${c.reset}
+${c.gray}─────────────────────────────────────────────────${c.reset}
+  ${c.cyan}Asset:${c.reset}     ${trade.asset}
+  ${c.cyan}Amount:${c.reset}    ${trade.amount}
+  ${c.cyan}Price:${c.reset}     ${formatPrice(trade.price)}
+  ${c.cyan}Received:${c.reset}  $${trade.usdtValue.toFixed(2)} - $${trade.fee.toFixed(2)} fee = $${(trade.usdtValue - trade.fee).toFixed(2)}
+  ${c.cyan}Balance:${c.reset}   $${trade.balanceAfter.toFixed(2)} USDT
+  ${c.gray}ID: ${trade.id}${c.reset}
+`);
+      } catch (err) {
+        console.log(`\n${c.red}✗ Sell failed:${c.reset} ${(err as Error).message}\n`);
+      }
+      break;
+    }
+
+    // ── paper portfolio ───────────────────────────────────────
+    case 'portfolio':
+    case 'port':
+    case 'p': {
+      console.log(`\n${c.cyan}Fetching live prices...${c.reset}`);
+      try {
+        const wallet = loadWallet();
+        const summary = await getPortfolioSummary(wallet);
+
+        const pnlColor = summary.totalPnl >= 0 ? c.green : c.red;
+        const pnlStr = formatPnl(summary.totalPnl, summary.totalPnlPct);
+
+        console.log(`
+${c.white}${c.bold}PAPER PORTFOLIO${c.reset}
+${c.gray}═════════════════════════════════════════════════════${c.reset}
+  ${c.white}Total Value:${c.reset}  ${c.bold}$${summary.totalValue.toFixed(2)}${c.reset}
+  ${c.white}P&L:${c.reset}          ${pnlColor}${pnlStr}${c.reset}
+  ${c.white}USDT:${c.reset}         $${summary.usdtBalance.toFixed(2)}
+  ${c.white}Started with:${c.reset} $${summary.initialValue.toLocaleString()}
+${c.gray}─────────────────────────────────────────────────────${c.reset}`);
+
+        if (summary.holdings.length === 0) {
+          console.log(`  ${c.dim}No holdings — use ${c.cyan}omnitrade paper buy BTC 0.01${c.dim} to start${c.reset}`);
+        } else {
+          const headerRow = `  ${'Asset'.padEnd(8)} ${'Amount'.padEnd(14)} ${'Price'.padEnd(12)} ${'Value'.padEnd(12)} ${'Avg Buy'.padEnd(12)} ${'P&L'.padEnd(16)} ${'Alloc'}`;
+          console.log(`${c.gray}${headerRow}${c.reset}`);
+          console.log(`${c.gray}  ${'─'.repeat(88)}${c.reset}`);
+
+          for (const h of summary.holdings) {
+            const pnlColor2 = h.pnl >= 0 ? c.green : c.red;
+            const pnlStr2 = `${h.pnl >= 0 ? '+' : ''}$${h.pnl.toFixed(2)} (${h.pnl >= 0 ? '+' : ''}${h.pnlPct.toFixed(1)}%)`;
+            const amtStr = h.amount >= 1 ? h.amount.toFixed(4) : h.amount.toFixed(6);
+            console.log(
+              `  ${c.cyan}${h.asset.padEnd(8)}${c.reset}` +
+              `${amtStr.padEnd(14)}` +
+              `${formatPrice(h.price).padEnd(12)}` +
+              `$${h.value.toFixed(2)}`.padEnd(12) +
+              `${formatPrice(h.avgBuyPrice).padEnd(12)}` +
+              `${pnlColor2}${pnlStr2.padEnd(16)}${c.reset}` +
+              `${h.allocation.toFixed(1)}%`
+            );
+          }
+        }
+        console.log(`${c.gray}═════════════════════════════════════════════════════${c.reset}\n`);
+      } catch (err) {
+        console.log(`\n${c.red}✗ Portfolio error:${c.reset} ${(err as Error).message}\n`);
+      }
+      break;
+    }
+
+    // ── paper history ─────────────────────────────────────────
+    case 'history':
+    case 'hist':
+    case 'h': {
+      try {
+        const wallet = loadWallet();
+
+        if (wallet.trades.length === 0) {
+          console.log(`\n${c.dim}No trades yet. Use ${c.cyan}omnitrade paper buy BTC 0.01${c.dim} to start.${c.reset}\n`);
+          return;
+        }
+
+        // Optional: --last N flag
+        const lastIdx = args.indexOf('--last');
+        const showLast = lastIdx !== -1 ? parseInt(args[lastIdx + 1] ?? '20', 10) : 20;
+        const trades = wallet.trades.slice(-showLast).reverse();
+
+        console.log(`\n${c.white}${c.bold}TRADE HISTORY${c.reset} ${c.dim}(last ${trades.length} of ${wallet.trades.length})${c.reset}`);
+        console.log(`${c.gray}═══════════════════════════════════════════════════════════════════════${c.reset}`);
+
+        const hdr = `  ${'Time'.padEnd(20)} ${'Side'.padEnd(6)} ${'Asset'.padEnd(8)} ${'Amount'.padEnd(14)} ${'Price'.padEnd(12)} ${'USDT Value'.padEnd(12)} Fee`;
+        console.log(`${c.gray}${hdr}${c.reset}`);
+        console.log(`${c.gray}  ${'─'.repeat(87)}${c.reset}`);
+
+        for (const t of trades) {
+          const sideColor = t.side === 'buy' ? c.green : c.red;
+          const sideStr = t.side.toUpperCase();
+          const amtStr = t.amount >= 1 ? t.amount.toFixed(4) : t.amount.toFixed(6);
+          console.log(
+            `  ${c.dim}${formatTimestamp(t.timestamp).padEnd(20)}${c.reset}` +
+            `${sideColor}${sideStr.padEnd(6)}${c.reset}` +
+            `${c.cyan}${t.asset.padEnd(8)}${c.reset}` +
+            `${amtStr.padEnd(14)}` +
+            `${formatPrice(t.price).padEnd(12)}` +
+            `$${t.usdtValue.toFixed(2)}`.padEnd(12) +
+            `$${t.fee.toFixed(4)}`
+          );
+        }
+
+        console.log(`${c.gray}═══════════════════════════════════════════════════════════════════════${c.reset}`);
+        console.log(`${c.dim}Total trades: ${wallet.trades.length}  │  Wallet: ~/.omnitrade/paper-wallet.json${c.reset}\n`);
+      } catch (err) {
+        console.log(`\n${c.red}✗ History error:${c.reset} ${(err as Error).message}\n`);
+      }
+      break;
+    }
+
+    // ── paper reset ───────────────────────────────────────────
+    case 'reset': {
+      const { existsSync, unlinkSync } = await import('fs');
+      const { homedir } = await import('os');
+      const { join } = await import('path');
+      const walletPath = join(homedir(), '.omnitrade', 'paper-wallet.json');
+
+      if (!existsSync(walletPath)) {
+        console.log(`\n${c.yellow}⚠${c.reset} No paper wallet found.\n`);
+        return;
+      }
+
+      const rl = (await import('readline')).createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise<string>((r) => rl.question(`\n${c.yellow}⚠ Reset paper wallet? This clears all trades and restarts with $10,000 (y/N): ${c.reset}`, r));
+      rl.close();
+
+      if (answer.toLowerCase() === 'y') {
+        unlinkSync(walletPath);
+        loadWallet(); // Creates a fresh wallet
+        console.log(`\n${c.green}✓ Paper wallet reset to $10,000 USDT${c.reset}\n`);
+      } else {
+        console.log(`${c.dim}Reset cancelled.${c.reset}\n`);
+      }
+      break;
+    }
+
+    // ── paper help ────────────────────────────────────────────
+    default: {
+      console.log(`
+${c.white}${c.bold}PAPER TRADING${c.reset}
+${c.gray}─────────────────────────────────────────────────────────${c.reset}
+
+  ${c.dim}Risk-free trading with $10,000 virtual USDT.
+  Real prices from Binance public API. No keys needed.${c.reset}
+
+  ${c.green}buy${c.reset}    ${c.cyan}omnitrade paper buy BTC 0.01${c.reset}      ${c.dim}Buy 0.01 BTC at market${c.reset}
+  ${c.red}sell${c.reset}   ${c.cyan}omnitrade paper sell ETH 0.5${c.reset}      ${c.dim}Sell 0.5 ETH at market${c.reset}
+  ${c.yellow}port${c.reset}   ${c.cyan}omnitrade paper portfolio${c.reset}         ${c.dim}Holdings + P&L${c.reset}
+  ${c.yellow}hist${c.reset}   ${c.cyan}omnitrade paper history${c.reset}           ${c.dim}Trade log${c.reset}
+  ${c.gray}reset${c.reset}  ${c.cyan}omnitrade paper reset${c.reset}             ${c.dim}Start fresh with $10,000${c.reset}
+
+  ${c.dim}Wallet stored at:${c.reset} ~/.omnitrade/paper-wallet.json
+  ${c.dim}Fees: 0.1% per trade (matches Binance spot taker fee)${c.reset}
+`);
+      break;
+    }
+  }
+}
